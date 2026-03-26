@@ -7,7 +7,7 @@ import { LeadsProvider } from "@/context/LeadsContext";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
 import BottomNav from "@/components/BottomNav";
 import HomePage from "./pages/HomePage";
-import VoiceCapture from "./pages/VoiceCapture";
+
 import QuickNote from "./pages/QuickNote";
 import AllLeads from "./pages/AllLeads";
 import LeadDetail from "./pages/LeadDetail";
@@ -24,7 +24,7 @@ const App = () => (
         <LeadsProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/voice" element={<VoiceCapture />} />
+            
             <Route path="/add" element={<QuickNote />} />
             <Route path="/leads" element={<AllLeads />} />
             <Route path="/leads/:id" element={<LeadDetail />} />

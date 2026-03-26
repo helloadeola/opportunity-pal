@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mic, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/context/LeadsContext";
 import { getLeadStatus } from "@/data/sampleLeads";
@@ -80,20 +80,12 @@ const AllLeads = () => {
               <p className="text-muted-foreground text-[13px]">
                 Add a new lead to get started.
               </p>
-              <div className="flex gap-2.5 mt-3">
-                <button
-                  onClick={() => navigate("/voice")}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold"
-                >
-                  <Mic size={14} /> Voice Note
-                </button>
-                <button
-                  onClick={() => navigate("/add")}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-[13px] font-semibold"
-                >
-                  <PenLine size={14} /> Quick Note
-                </button>
-              </div>
+              <button
+                onClick={() => navigate("/add")}
+                className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold mt-3"
+              >
+                <PenLine size={14} /> Add Quick Note
+              </button>
             </motion.div>
           ) : (
             activeLeads.map((lead, i) => (

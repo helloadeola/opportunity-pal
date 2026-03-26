@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, PenLine, Settings, Trash2, X, Bell, BellOff, Info } from "lucide-react";
+import { PenLine, Settings, Trash2, X, Bell, BellOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
@@ -302,24 +302,14 @@ const HomePage = () => {
         <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
           Quick Capture
         </h2>
-        <div className="grid grid-cols-2 gap-2.5">
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/voice")}
-            className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
-          >
-            <Mic size={22} strokeWidth={1.8} className="text-primary" />
-            <span className="font-semibold text-primary text-[13px]">Voice Note</span>
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/add")}
-            className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
-          >
-            <PenLine size={22} strokeWidth={1.8} className="text-foreground" />
-            <span className="font-semibold text-foreground text-[13px]">Quick Note</span>
-          </motion.button>
-        </div>
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate("/add")}
+          className="flex items-center justify-center gap-2 w-full p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
+        >
+          <PenLine size={22} strokeWidth={1.8} className="text-primary" />
+          <span className="font-semibold text-primary text-[13px]">Add Quick Note</span>
+        </motion.button>
       </section>
 
       {/* About Modal */}
