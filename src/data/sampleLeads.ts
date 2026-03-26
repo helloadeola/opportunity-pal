@@ -28,53 +28,7 @@ const daysFromNow = (n: number) => {
   return d;
 };
 
-export const sampleLeads: Lead[] = [
-  {
-    id: "1",
-    name: "Sarah",
-    company: "TechCrunch",
-    category: "Opportunity",
-    notes: "Met at conference, interested in feature article",
-    dueDate: daysAgo(5),
-    createdAt: daysAgo(10),
-  },
-  {
-    id: "2",
-    name: "James",
-    company: "Meta",
-    category: "Warm Lead",
-    notes: "Connected on LinkedIn, wants to discuss partnership",
-    dueDate: today,
-    createdAt: daysAgo(3),
-  },
-  {
-    id: "3",
-    name: "Amanda",
-    company: "Podcast Network",
-    category: "Speaking Engagement",
-    notes: "Invited to speak on creator economy podcast",
-    dueDate: daysFromNow(2),
-    createdAt: daysAgo(5),
-  },
-  {
-    id: "4",
-    name: "Marcus",
-    company: "Creator Monetization",
-    category: "Opportunity",
-    notes: "Exploring potential collaboration on tools",
-    dueDate: daysFromNow(5),
-    createdAt: daysAgo(7),
-  },
-  {
-    id: "5",
-    name: "Fanta",
-    company: "Creator Platform",
-    category: "Partnership",
-    notes: "Discussed co-marketing opportunity",
-    dueDate: daysAgo(3),
-    createdAt: daysAgo(8),
-  },
-];
+export const sampleLeads: Lead[] = [];
 
 export type LeadStatus = "overdue" | "due-today" | "upcoming";
 
