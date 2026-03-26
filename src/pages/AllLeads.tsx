@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mic, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/context/LeadsContext";
 import { getLeadStatus } from "@/data/sampleLeads";
