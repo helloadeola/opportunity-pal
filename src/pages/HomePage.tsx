@@ -9,7 +9,9 @@ import { toast } from "sonner";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { leads } = useLeads();
+  const { leads, clearAllData } = useLeads();
+  const [showSettings, setShowSettings] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const followUps = leads
     .filter((l) => {
