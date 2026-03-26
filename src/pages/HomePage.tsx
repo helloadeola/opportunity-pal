@@ -1,15 +1,35 @@
+import { Lead, getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, PenLine } from "lucide-react";
+import { Mic, PenLine, PartyPopper } from "lucide-react";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { leads } = useLeads();
-  const urgentLeads = leads
-    .filter((l) => l.status === "overdue" || l.status === "due-today" || l.status === "upcoming")
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+  const followUps = leads
+    .filter((l) => {
+      if (l.completed) return false;
+      const status = getLeadStatus(l);
+      if (status === "overdue" || status === "due-today") return true;
+      // upcoming but within 3 days
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const dueStart = new Date(l.dueDate);
+      dueStart.setHours(0, 0, 0, 0);
+      const diff = Math.round((dueStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= 0 && diff <= 3;
+    })
+    .sort((a, b) => {
+      const statusA = getLeadStatus(a);
+      const statusB = getLeadStatus(b);
+      const order = { overdue: 0, "due-today": 1, upcoming: 2 };
+      if (order[statusA] !== order[statusB]) return order[statusA] - order[statusB];
+      // within same group: overdue = oldest first (earliest due), others = soonest first
+      return a.dueDate.getTime() - b.dueDate.getTime();
+    });
 
   return (
     <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
@@ -22,7 +42,9 @@ const HomePage = () => {
           Follow Through ✨
         </h1>
         <p className="text-muted-foreground mt-1 font-medium">
-          You've got this. Here's who needs you today.
+          {followUps.length > 0
+            ? "You've got this. Here's who needs you today."
+            : "Looking good! Nothing urgent right now."}
         </p>
       </motion.div>
 
@@ -31,12 +53,20 @@ const HomePage = () => {
           Today's Follow-Ups
         </h2>
         <div className="flex flex-col gap-3">
-          {urgentLeads.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">
-              All clear! No follow-ups right now 🎉
-            </p>
+          {followUps.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3 py-8 bg-card rounded-xl border border-border"
+            >
+              <PartyPopper size={36} className="text-primary" />
+              <p className="text-foreground font-bold">You're all caught up! 🎉</p>
+              <p className="text-muted-foreground text-sm font-medium">
+                No follow-ups due right now. Go relax!
+              </p>
+            </motion.div>
           ) : (
-            urgentLeads.map((lead, i) => (
+            followUps.map((lead, i) => (
               <LeadCard key={lead.id} lead={lead} index={i} />
             ))
           )}

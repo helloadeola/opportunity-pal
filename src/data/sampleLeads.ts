@@ -5,10 +5,10 @@ export interface Lead {
   category: string;
   notes: string;
   dueDate: Date;
-  status: "overdue" | "due-today" | "upcoming";
   createdAt: Date;
   snoozedUntil?: Date;
   reachedOut?: boolean;
+  completed?: boolean;
   audioUrl?: string;
 }
 
@@ -32,7 +32,6 @@ export const sampleLeads: Lead[] = [
     category: "Opportunity",
     notes: "Met at conference, interested in feature article",
     dueDate: daysAgo(5),
-    status: "overdue",
     createdAt: daysAgo(10),
   },
   {
@@ -42,7 +41,6 @@ export const sampleLeads: Lead[] = [
     category: "Warm Lead",
     notes: "Connected on LinkedIn, wants to discuss partnership",
     dueDate: today,
-    status: "due-today",
     createdAt: daysAgo(3),
   },
   {
@@ -52,7 +50,6 @@ export const sampleLeads: Lead[] = [
     category: "Speaking Engagement",
     notes: "Invited to speak on creator economy podcast",
     dueDate: daysFromNow(2),
-    status: "upcoming",
     createdAt: daysAgo(5),
   },
   {
@@ -62,7 +59,6 @@ export const sampleLeads: Lead[] = [
     category: "Opportunity",
     notes: "Exploring potential collaboration on tools",
     dueDate: daysFromNow(5),
-    status: "upcoming",
     createdAt: daysAgo(7),
   },
   {
@@ -72,15 +68,30 @@ export const sampleLeads: Lead[] = [
     category: "Partnership",
     notes: "Discussed co-marketing opportunity",
     dueDate: daysAgo(3),
-    status: "overdue",
     createdAt: daysAgo(8),
   },
 ];
 
+export type LeadStatus = "overdue" | "due-today" | "upcoming";
+
+export const getDaysDiff = (lead: Lead): number => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const dueStart = new Date(lead.dueDate);
+  dueStart.setHours(0, 0, 0, 0);
+  return Math.round((dueStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+export const getLeadStatus = (lead: Lead): LeadStatus => {
+  const diff = getDaysDiff(lead);
+  if (diff < 0) return "overdue";
+  if (diff === 0) return "due-today";
+  return "upcoming";
+};
+
 export const getStatusLabel = (lead: Lead): string => {
-  const diffMs = lead.dueDate.getTime() - new Date().setHours(0, 0, 0, 0);
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return `${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? "s" : ""} overdue`;
-  if (diffDays === 0) return "Due today";
-  return `Due in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
+  const diff = getDaysDiff(lead);
+  if (diff < 0) return `${Math.abs(diff)} day${Math.abs(diff) > 1 ? "s" : ""} overdue`;
+  if (diff === 0) return "Due today";
+  return `In ${diff} day${diff > 1 ? "s" : ""}`;
 };
