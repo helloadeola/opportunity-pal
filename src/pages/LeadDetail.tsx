@@ -56,6 +56,12 @@ const LeadDetail = () => {
             <span className="text-sm font-bold text-muted-foreground">Category</span>
             <span className="text-sm font-bold text-foreground">{lead.category}</span>
           </div>
+          {lead.audioUrl && (
+            <div className="p-4 bg-card rounded-lg border border-border">
+              <span className="text-sm font-bold text-muted-foreground block mb-2">🎙️ Voice Note</span>
+              <audio src={lead.audioUrl} controls className="w-full h-10" />
+            </div>
+          )}
           {lead.notes && (
             <div className="p-4 bg-card rounded-lg border border-border">
               <span className="text-sm font-bold text-muted-foreground block mb-2">Notes</span>
