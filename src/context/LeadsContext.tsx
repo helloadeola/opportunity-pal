@@ -50,6 +50,8 @@ export const LeadsProvider = ({ children }: { children: ReactNode }) => {
 
   const clearAllData = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("hasCompletedOnboarding");
+    localStorage.removeItem("userName");
     setLeads(sampleLeads);
   }, []);
 
