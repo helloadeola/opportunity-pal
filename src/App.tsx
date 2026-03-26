@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LeadsProvider } from "@/context/LeadsContext";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
 import BottomNav from "@/components/BottomNav";
+import InstallBanner from "@/components/InstallBanner";
 import Onboarding from "@/components/Onboarding";
 import HomePage from "./pages/HomePage";
 import QuickNote from "./pages/QuickNote";
