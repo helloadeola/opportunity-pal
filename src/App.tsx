@@ -24,7 +24,7 @@ const App = () => (
         <LeadsProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/voice" element={<VoiceCapture />} />
+            
             <Route path="/add" element={<QuickNote />} />
             <Route path="/leads" element={<AllLeads />} />
             <Route path="/leads/:id" element={<LeadDetail />} />

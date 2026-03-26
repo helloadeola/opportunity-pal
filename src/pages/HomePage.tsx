@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, PenLine, Settings, Trash2, X, Bell, BellOff, Info } from "lucide-react";
+import { PenLine, Settings, Trash2, X, Bell, BellOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
