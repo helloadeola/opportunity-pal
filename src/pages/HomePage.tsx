@@ -366,6 +366,7 @@ const HomePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <AppTour />
     </div>
   );
 };
