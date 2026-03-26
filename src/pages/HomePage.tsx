@@ -134,6 +134,18 @@ const HomePage = () => {
                 </button>
               </div>
 
+              {/* About Section */}
+              <button
+                onClick={() => setShowAbout(true)}
+                className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-accent transition-colors duration-200 text-left mb-5 pb-5 border-b border-border"
+              >
+                <Info size={14} className="text-primary" />
+                <div>
+                  <p className="text-[13px] font-medium text-foreground">About Follow Through</p>
+                  <p className="text-[11px] text-muted-foreground">Learn what this app is about</p>
+                </div>
+              </button>
+
               {/* Notifications Section */}
               <div className="mb-5 pb-5 border-b border-border">
                 <div className="flex items-center gap-2 mb-3">
