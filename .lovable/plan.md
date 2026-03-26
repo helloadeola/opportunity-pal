@@ -1,19 +1,24 @@
 
 
-## Plan: Remove Sample Data and Publish
+## Plan: Add Animated Hero Visual to Onboarding Welcome Screen
 
-### 1. Remove sample leads data
-- **`src/data/sampleLeads.ts`**: Change `sampleLeads` array to an empty array `[]` so new users start fresh with no pre-loaded leads
-- **`src/context/LeadsContext.tsx`**: The `loadLeads` fallback already references `sampleLeads`, so emptying the array is sufficient. Also update `clearAllData` to reset to an empty array instead of sample data.
+Add an eye-catching animated graphic above the welcome text using Framer Motion. Since the app is about leads and follow-ups, create an animated "network/connections" illustration built with motion-animated SVG circles and lines that draw themselves in, plus a pulsing central icon.
 
-### 2. How to share with your client
+### What gets built
 
-To publish and share the app:
+**Animated hero graphic** in Step 1 of `src/components/Onboarding.tsx`:
+- A central circular icon (target/crosshair motif) that scales in with a spring animation
+- 3-4 orbiting dots that fade in sequentially with staggered delays, connected by animated lines
+- Subtle gradient glow behind the central element
+- All built with inline SVG + Framer Motion (no external assets needed)
+- Uses the app's primary blue and accent colors
+- Total animation sequence: ~1.5s, smooth and premium feeling
 
-- **Desktop**: Click the **Publish** button (globe icon) in the top-right corner of the editor, then click "Update" to deploy
-- **Mobile**: Tap the **...** button in the bottom-right corner, then tap **Publish**
+### Technical details
 
-Once published, you'll get a shareable link you can send to your client. The app will be accessible to anyone with that link.
-
-If the published site shows a login screen, we can set the visibility to "public" so anyone with the link can access it without needing an account.
+- **File changed**: `src/components/Onboarding.tsx` only
+- Add a new `WelcomeHero` component within the file using `motion.div`, `motion.svg`, `motion.circle`, `motion.path`
+- Animations: `pathLength` for line drawing, `scale`/`opacity` for elements appearing, `rotate` for subtle orbital motion
+- Renders above the "Follow Through App" heading
+- Responsive: sized relative to container, works on 390px mobile viewport
 
