@@ -54,7 +54,6 @@ const QuickNote = () => {
       category,
       notes: notes.trim().slice(0, 500),
       dueDate,
-      status: "upcoming",
       createdAt: today,
     });
 
