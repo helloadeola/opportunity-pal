@@ -84,7 +84,7 @@ const AllLeads = () => {
                 onClick={() => navigate("/add")}
                 className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold mt-3"
               >
-                <PenLine size={14} /> Add Quick Note
+                <PenLine size={14} /> Add New Lead
               </button>
             </motion.div>
           ) : (
