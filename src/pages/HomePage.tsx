@@ -1,9 +1,11 @@
-import { Lead, getLeadStatus } from "@/data/sampleLeads";
+import { useState } from "react";
+import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mic, PenLine, PartyPopper } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, PenLine, PartyPopper, Settings, Trash2, X } from "lucide-react";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
+import { toast } from "sonner";
 
 const HomePage = () => {
   const navigate = useNavigate();
