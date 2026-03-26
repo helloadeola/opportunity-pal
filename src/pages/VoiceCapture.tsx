@@ -142,7 +142,6 @@ const VoiceCapture = () => {
       category,
       notes: context.trim().slice(0, 500),
       dueDate,
-      status: "upcoming",
       createdAt: today,
       audioUrl: audioUrl || undefined,
     });
