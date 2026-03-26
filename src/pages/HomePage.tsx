@@ -2,23 +2,48 @@ import { useState } from "react";
 import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, PenLine, PartyPopper, Settings, Trash2, X } from "lucide-react";
+import { Mic, PenLine, PartyPopper, Settings, Trash2, X, Bell, BellOff } from "lucide-react";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useNotificationSettings,
+  requestNotificationPermission,
+  getPermissionStatus,
+} from "@/hooks/useNotificationSettings";
+
+const timeOptions = Array.from({ length: 14 }, (_, i) => {
+  const hour = i + 5; // 5 AM to 6 PM
+  const label = hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`;
+  return { value: hour, label };
+});
+
+const frequencyOptions = [
+  { value: "daily", label: "Every day" },
+  { value: "3x-week", label: "3× per week (Mon, Wed, Fri)" },
+  { value: "weekly", label: "Weekly (Monday)" },
+] as const;
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { leads, clearAllData } = useLeads();
   const [showSettings, setShowSettings] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const { settings: notifSettings, update: updateNotif } = useNotificationSettings();
 
   const followUps = leads
     .filter((l) => {
       if (l.completed || l.archived) return false;
       const status = getLeadStatus(l);
       if (status === "overdue" || status === "due-today") return true;
-      // upcoming but within 3 days
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const dueStart = new Date(l.dueDate);
@@ -31,9 +56,32 @@ const HomePage = () => {
       const statusB = getLeadStatus(b);
       const order = { overdue: 0, "due-today": 1, upcoming: 2 };
       if (order[statusA] !== order[statusB]) return order[statusA] - order[statusB];
-      // within same group: overdue = oldest first (earliest due), others = soonest first
       return a.dueDate.getTime() - b.dueDate.getTime();
     });
+
+  const handleToggleNotifications = async (enabled: boolean) => {
+    if (enabled) {
+      const permStatus = getPermissionStatus();
+      if (permStatus === "unsupported") {
+        toast.error("Your browser doesn't support notifications 😔");
+        return;
+      }
+      if (permStatus === "denied") {
+        toast.error("Notifications are blocked. Enable them in your browser settings.");
+        return;
+      }
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        toast.error("We need permission to send reminders. You can enable this in browser settings.");
+        return;
+      }
+      updateNotif({ enabled: true });
+      toast.success("Reminders enabled! We'll nudge you when it's time. 🔔");
+    } else {
+      updateNotif({ enabled: false });
+      toast.success("Reminders turned off. You can re-enable anytime. 🔕");
+    }
+  };
 
   return (
     <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
@@ -60,7 +108,7 @@ const HomePage = () => {
         </p>
       </motion.div>
 
-      {/* Settings dropdown */}
+      {/* Settings panel */}
       <AnimatePresence>
         {showSettings && (
           <motion.div
@@ -70,7 +118,7 @@ const HomePage = () => {
             className="mb-6 overflow-hidden"
           >
             <div className="p-4 bg-card rounded-xl border border-border">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold text-foreground">Settings</p>
                 <button
                   onClick={() => { setShowSettings(false); setConfirmClear(false); }}
@@ -79,6 +127,94 @@ const HomePage = () => {
                   <X size={16} />
                 </button>
               </div>
+
+              {/* Notifications Section */}
+              <div className="mb-4 pb-4 border-b border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  {notifSettings.enabled ? (
+                    <Bell size={16} className="text-primary" />
+                  ) : (
+                    <BellOff size={16} className="text-muted-foreground" />
+                  )}
+                  <p className="text-sm font-bold text-foreground">Notifications</p>
+                </div>
+
+                {/* Toggle */}
+                <div className="flex items-center justify-between mb-3 p-3 rounded-lg bg-muted/50">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Daily reminder</p>
+                    <p className="text-xs text-muted-foreground">
+                      Get nudged about your follow-ups
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notifSettings.enabled}
+                    onCheckedChange={handleToggleNotifications}
+                  />
+                </div>
+
+                {/* Time & Frequency — only when enabled */}
+                <AnimatePresence>
+                  {notifSettings.enabled && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-3 overflow-hidden"
+                    >
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground mb-1 block">
+                          Reminder time
+                        </label>
+                        <Select
+                          value={String(notifSettings.hour)}
+                          onValueChange={(v) => updateNotif({ hour: parseInt(v, 10) })}
+                        >
+                          <SelectTrigger className="bg-background">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((t) => (
+                              <SelectItem key={t.value} value={String(t.value)}>
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground mb-1 block">
+                          How often
+                        </label>
+                        <Select
+                          value={notifSettings.frequency}
+                          onValueChange={(v) =>
+                            updateNotif({ frequency: v as "daily" | "3x-week" | "weekly" })
+                          }
+                        >
+                          <SelectTrigger className="bg-background">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {frequencyOptions.map((f) => (
+                              <SelectItem key={f.value} value={f.value}>
+                                {f.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground italic pt-1">
+                        Keep the app open or installed for notifications to work.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Clear Data */}
               {!confirmClear ? (
                 <button
                   onClick={() => setConfirmClear(true)}
