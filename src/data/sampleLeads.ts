@@ -9,6 +9,7 @@ export interface Lead {
   snoozedUntil?: Date;
   reachedOut?: boolean;
   completed?: boolean;
+  archived?: boolean;
   lastContactDate?: Date;
   audioUrl?: string;
 }
