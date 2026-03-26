@@ -7,7 +7,7 @@ const serializeLeads = (leads: Lead[]): string =>
   JSON.stringify(leads, (_, v) => (v instanceof Date ? v.toISOString() : v));
 
 const deserializeLeads = (json: string): Lead[] => {
-  const dateKeys = ["dueDate", "createdAt", "snoozedUntil", "lastContactDate"];
+  const dateKeys = ["dueDate", "createdAt", "snoozedUntil", "lastContactDate", "dateCompleted"];
   return JSON.parse(json, (key, value) =>
     dateKeys.includes(key) && typeof value === "string" ? new Date(value) : value
   );
