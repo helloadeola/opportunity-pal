@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
-import { ArrowLeft, Send, Clock, CheckCircle2, CalendarClock, ArrowRight, CalendarIcon, X } from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
+import {
+  ArrowLeft, Send, Clock, CheckCircle2, CalendarClock,
+  ArrowRight, CalendarIcon, X, Play, Pause, Archive,
+  ArchiveRestore, User, Building2, Tag, CalendarDays,
+  MessageSquare, Mic
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getStatusLabel, getLeadStatus } from "@/data/sampleLeads";
+import { getDaysDiff, getLeadStatus } from "@/data/sampleLeads";
 import { useLeads } from "@/context/LeadsContext";
 import StatusBadge from "@/components/StatusBadge";
 import { toast } from "sonner";
@@ -16,6 +22,7 @@ type ActionSheet = null | "reached-out" | "snooze" | "reschedule";
 
 const daysFromNow = (n: number) => {
   const d = new Date();
+  d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + n);
   return d;
 };
@@ -27,19 +34,53 @@ const LeadDetail = () => {
   const lead = leads.find((l) => l.id === id);
   const [activeSheet, setActiveSheet] = useState<ActionSheet>(null);
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState("");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   if (!lead) {
     return (
       <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto text-center">
         <p className="text-muted-foreground">Lead not found.</p>
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">
-          Go back
-        </Button>
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">Go back</Button>
       </div>
     );
   }
 
-  const status = getLeadStatus(lead);
+  const daysDiff = getDaysDiff(lead);
+  const followUpLabel = daysDiff < 0
+    ? `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? "s" : ""}`
+    : daysDiff === 0
+    ? "Due today"
+    : `In ${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
+
+  const followUpColor = daysDiff < 0
+    ? "text-destructive"
+    : daysDiff === 0
+    ? "text-yellow-600"
+    : "text-primary";
+
+  const togglePlayback = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const startEditNotes = () => {
+    setNotesValue(lead.notes || "");
+    setEditingNotes(true);
+  };
+
+  const saveNotes = () => {
+    updateLead(lead.id, { notes: notesValue.trim().slice(0, 1000) });
+    setEditingNotes(false);
+    toast.success("Notes updated! ✍️");
+  };
 
   const handleSnooze = (days: number) => {
     updateLead(lead.id, { dueDate: daysFromNow(days) });
@@ -78,8 +119,20 @@ const LeadDetail = () => {
     toast.success(`You're doing great! We'll check in again in ${days} day${days > 1 ? "s" : ""}. 💪`);
   };
 
+  const handleArchive = () => {
+    updateLead(lead.id, { archived: true });
+    toast.success("Archived. You can find them in All Leads. 📦");
+    navigate("/");
+  };
+
+  const handleUnarchive = () => {
+    updateLead(lead.id, { archived: false });
+    toast.success("Back in action! 🚀");
+  };
+
   return (
     <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
+      {/* Back */}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mb-6 font-semibold text-sm"
@@ -88,7 +141,7 @@ const LeadDetail = () => {
       </button>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        {/* Header */}
+        {/* TOP: Name + Company */}
         <div className="flex items-center gap-4 mb-2">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-extrabold text-xl shrink-0">
             {lead.name[0]}
@@ -96,96 +149,218 @@ const LeadDetail = () => {
           <div className="min-w-0">
             <h1 className="text-2xl font-extrabold text-foreground truncate">{lead.name}</h1>
             {lead.company && (
-              <p className="text-muted-foreground font-medium truncate">{lead.company}</p>
+              <p className="text-muted-foreground font-medium truncate flex items-center gap-1">
+                <Building2 size={14} />
+                {lead.company}
+              </p>
             )}
           </div>
         </div>
 
-        {/* Completed banner */}
+        {/* Status banners */}
         {lead.completed && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="mt-4 p-3 rounded-lg bg-success/10 border border-success/20 flex items-center gap-2"
+            className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2"
           >
-            <CheckCircle2 size={18} className="text-success" />
-            <span className="text-sm font-bold text-success">Completed! You nailed it! 🎉</span>
+            <CheckCircle2 size={18} className="text-emerald-600" />
+            <span className="text-sm font-bold text-emerald-600">Completed! You nailed it! 🎉</span>
           </motion.div>
         )}
 
-        {/* Info cards */}
-        <div className="space-y-3 mt-6 mb-6">
-          <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-            <span className="text-sm font-bold text-muted-foreground">Status</span>
-            {lead.completed ? (
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-success/15 text-success">Completed</span>
-            ) : (
-              <StatusBadge lead={lead} />
+        {lead.archived && !lead.completed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 p-3 rounded-lg bg-muted border border-border flex items-center gap-2"
+          >
+            <Archive size={18} className="text-muted-foreground" />
+            <span className="text-sm font-bold text-muted-foreground">Archived</span>
+          </motion.div>
+        )}
+
+        {/* CONTEXT SECTION */}
+        <div className="mt-6 mb-6">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+            Context
+          </h2>
+          <div className="space-y-0 bg-card rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <CalendarDays size={15} /> When you met them
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {format(lead.createdAt, "MMM d, yyyy")}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <Send size={15} /> Last contact
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {lead.lastContactDate ? format(lead.lastContactDate, "MMM d, yyyy") : "Not yet"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <Tag size={15} /> Category
+              </span>
+              <span className="text-sm font-semibold text-foreground">{lead.category}</span>
+            </div>
+
+            {!lead.completed && (
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <CalendarClock size={15} /> Follow-up by
+                </span>
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-foreground block">
+                    {format(lead.dueDate, "MMM d, yyyy")}
+                  </span>
+                  <span className={`text-xs font-bold ${followUpColor}`}>
+                    {followUpLabel}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* NOTES SECTION */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <MessageSquare size={13} /> Notes & Context
+            </h2>
+            {!editingNotes && (
+              <button
+                onClick={startEditNotes}
+                className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                Edit
+              </button>
             )}
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-            <span className="text-sm font-bold text-muted-foreground">Category</span>
-            <span className="text-sm font-bold text-foreground">{lead.category}</span>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-            <span className="text-sm font-bold text-muted-foreground">Added</span>
-            <span className="text-sm font-medium text-foreground">
-              {format(lead.createdAt, "MMM d, yyyy")}
-            </span>
-          </div>
-
-          {lead.lastContactDate && (
-            <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-              <span className="text-sm font-bold text-muted-foreground">Last Contact</span>
-              <span className="text-sm font-medium text-foreground">
-                {format(lead.lastContactDate, "MMM d, yyyy")}
-              </span>
+          {editingNotes ? (
+            <div className="bg-card rounded-xl border border-border p-4">
+              <Textarea
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                maxLength={1000}
+                className="bg-background min-h-[100px] mb-3"
+                placeholder="Add your notes..."
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveNotes} className="font-bold">
+                  Got it! ✍️
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setEditingNotes(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          )}
-
-          {!lead.completed && (
-            <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-              <span className="text-sm font-bold text-muted-foreground">Follow-up</span>
-              <span className="text-sm font-medium text-foreground">
-                {format(lead.dueDate, "MMM d, yyyy")}
-              </span>
-            </div>
-          )}
-
-          {lead.audioUrl && (
-            <div className="p-4 bg-card rounded-lg border border-border">
-              <span className="text-sm font-bold text-muted-foreground block mb-2">🎙️ Voice Note</span>
-              <audio src={lead.audioUrl} controls className="w-full h-10" />
-            </div>
-          )}
-
-          {lead.notes && (
-            <div className="p-4 bg-card rounded-lg border border-border">
-              <span className="text-sm font-bold text-muted-foreground block mb-2">Notes</span>
-              <p className="text-sm text-foreground leading-relaxed">{lead.notes}</p>
+          ) : (
+            <div className="bg-card rounded-xl border border-border p-4">
+              {lead.notes ? (
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                  {lead.notes}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No notes yet. Tap Edit to add some! ✍️
+                </p>
+              )}
             </div>
           )}
         </div>
 
-        {/* Action buttons - only show if not completed */}
-        {!lead.completed && (
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <Button size="lg" className="font-bold" onClick={() => setActiveSheet("reached-out")}>
-              <Send size={18} className="mr-2" />
-              Reached Out
-            </Button>
+        {/* VOICE NOTE SECTION */}
+        {lead.audioUrl && (
+          <div className="mb-6">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1">
+              <Mic size={13} /> Voice Note
+            </h2>
+            <div className="bg-card rounded-xl border border-border p-4">
+              <audio
+                ref={audioRef}
+                src={lead.audioUrl}
+                onEnded={() => setIsPlaying(false)}
+                className="hidden"
+              />
+              <div className="flex items-center gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={togglePlayback}
+                  className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0"
+                >
+                  {isPlaying ? (
+                    <Pause size={20} className="text-primary-foreground" />
+                  ) : (
+                    <Play size={20} className="text-primary-foreground ml-0.5" />
+                  )}
+                </motion.button>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {isPlaying ? "Playing..." : "Tap to listen"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Voice note attached to this lead
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ACTION BUTTONS */}
+        {!lead.completed && !lead.archived && (
+          <div className="space-y-3 mb-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Button size="lg" className="font-bold" onClick={() => setActiveSheet("reached-out")}>
+                <Send size={18} className="mr-2" />
+                Reached Out
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="font-bold"
+                onClick={() => setActiveSheet("snooze")}
+              >
+                <Clock size={18} className="mr-2" />
+                Snooze
+              </Button>
+            </div>
             <Button
               size="lg"
-              variant="secondary"
-              className="font-bold"
-              onClick={() => setActiveSheet("snooze")}
+              variant="outline"
+              className="w-full font-bold text-muted-foreground"
+              onClick={handleArchive}
             >
-              <Clock size={18} className="mr-2" />
-              Snooze
+              <Archive size={18} className="mr-2" />
+              Archive
             </Button>
           </div>
+        )}
+
+        {/* Unarchive button */}
+        {lead.archived && !lead.completed && (
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full font-bold mb-4"
+            onClick={handleUnarchive}
+          >
+            <ArchiveRestore size={18} className="mr-2" />
+            Unarchive
+          </Button>
         )}
       </motion.div>
 
@@ -208,10 +383,9 @@ const LeadDetail = () => {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-[480px] bg-card rounded-t-2xl border-t border-border p-5 pb-10"
             >
-              {/* Close button */}
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-extrabold text-foreground">
-                  {activeSheet === "reached-out" && "Nice work! What's next? 🙌"}
+                  {activeSheet === "reached-out" && "Nice work! What's the update? 🙌"}
                   {activeSheet === "snooze" && "When should we remind you? 😴"}
                   {activeSheet === "reschedule" && "When should we check in again? 📅"}
                 </h3>
@@ -226,72 +400,48 @@ const LeadDetail = () => {
               {/* Reached Out options */}
               {activeSheet === "reached-out" && (
                 <div className="flex flex-col gap-3">
-                  <button
+                  <SheetOption
+                    icon={<CalendarClock size={20} className="text-primary" />}
+                    title="Schedule next follow-up"
+                    subtitle="Pick a new follow-up date"
                     onClick={handleReachedOutSnooze}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <Clock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Snooze it</p>
-                      <p className="text-xs text-muted-foreground">Pick a new follow-up date</p>
-                    </div>
-                  </button>
-                  <button
+                  />
+                  <SheetOption
+                    icon={<CheckCircle2 size={20} className="text-emerald-600" />}
+                    title="We're good!"
+                    subtitle="Mark as completed — you nailed it! 🎉"
                     onClick={handleMarkCompleted}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CheckCircle2 size={20} className="text-success shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Mark as completed</p>
-                      <p className="text-xs text-muted-foreground">We got the deal/opportunity! 🎉</p>
-                    </div>
-                  </button>
-                  <button
+                  />
+                  <SheetOption
+                    icon={<ArrowRight size={20} className="text-muted-foreground" />}
+                    title="Keep following up"
+                    subtitle="Set a new follow-up date"
                     onClick={handleKeepFollowing}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <ArrowRight size={20} className="text-accent shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Keep following up</p>
-                      <p className="text-xs text-muted-foreground">Reschedule the next check-in</p>
-                    </div>
-                  </button>
+                  />
                 </div>
               )}
 
               {/* Snooze options */}
-              {activeSheet === "snooze" && (
+              {(activeSheet === "snooze" || activeSheet === "reschedule") && (
                 <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => handleSnooze(1)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Snooze 1 day</p>
-                      <p className="text-xs text-muted-foreground">Remind me tomorrow</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleSnooze(3)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Snooze 3 days</p>
-                      <p className="text-xs text-muted-foreground">Check back in a few days</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleSnooze(7)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">Snooze 1 week</p>
-                      <p className="text-xs text-muted-foreground">Come back to this next week</p>
-                    </div>
-                  </button>
+                  {[
+                    { days: 1, label: "1 day", sub: "Remind me tomorrow" },
+                    { days: 3, label: "3 days", sub: "Check back in a few days" },
+                    { days: 7, label: "1 week", sub: "Come back to this next week" },
+                    { days: 14, label: "2 weeks", sub: "Circle back later" },
+                  ].map((opt) => (
+                    <SheetOption
+                      key={opt.days}
+                      icon={<CalendarClock size={20} className="text-primary" />}
+                      title={activeSheet === "snooze" ? `Snooze ${opt.label}` : `In ${opt.label}`}
+                      subtitle={opt.sub}
+                      onClick={() =>
+                        activeSheet === "snooze"
+                          ? handleSnooze(opt.days)
+                          : handleReschedule(opt.days)
+                      }
+                    />
+                  ))}
                   <div className="pt-2 border-t border-border mt-1">
                     <p className="text-xs font-bold text-muted-foreground mb-2">Pick a custom date</p>
                     <Popover>
@@ -304,7 +454,7 @@ const LeadDetail = () => {
                           )}
                         >
                           <CalendarIcon size={16} className="mr-2" />
-                          {customDate ? format(customDate, "MMM d, yyyy") : "Choose a date..."}
+                          {customDate ? format(customDate, "EEEE, MMMM d") : "Choose a date..."}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="center">
@@ -312,7 +462,7 @@ const LeadDetail = () => {
                           mode="single"
                           selected={customDate}
                           onSelect={setCustomDate}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                         />
@@ -322,87 +472,18 @@ const LeadDetail = () => {
                       <Button
                         size="lg"
                         className="w-full mt-3 font-bold"
-                        onClick={handleSnoozeCustom}
+                        onClick={
+                          activeSheet === "snooze"
+                            ? handleSnoozeCustom
+                            : () => {
+                                updateLead(lead.id, { dueDate: customDate });
+                                setActiveSheet(null);
+                                setCustomDate(undefined);
+                                toast.success(`Got it! We'll check in on ${format(customDate, "MMM d")}. 💪`);
+                              }
+                        }
                       >
-                        Got it! Snooze until {format(customDate, "MMM d")} 👍
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Reschedule options */}
-              {activeSheet === "reschedule" && (
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => handleReschedule(3)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">In 3 days</p>
-                      <p className="text-xs text-muted-foreground">Quick follow-up</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleReschedule(7)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">In 1 week</p>
-                      <p className="text-xs text-muted-foreground">Give it a bit of time</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleReschedule(14)}
-                    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
-                  >
-                    <CalendarClock size={20} className="text-primary shrink-0" />
-                    <div>
-                      <p className="font-bold text-foreground text-sm">In 2 weeks</p>
-                      <p className="text-xs text-muted-foreground">Circle back later</p>
-                    </div>
-                  </button>
-                  <div className="pt-2 border-t border-border mt-1">
-                    <p className="text-xs font-bold text-muted-foreground mb-2">Pick a custom date</p>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-medium",
-                            !customDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon size={16} className="mr-2" />
-                          {customDate ? format(customDate, "MMM d, yyyy") : "Choose a date..."}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="center">
-                        <Calendar
-                          mode="single"
-                          selected={customDate}
-                          onSelect={setCustomDate}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {customDate && (
-                      <Button
-                        size="lg"
-                        className="w-full mt-3 font-bold"
-                        onClick={() => {
-                          if (!customDate) return;
-                          updateLead(lead.id, { dueDate: customDate });
-                          setActiveSheet(null);
-                          setCustomDate(undefined);
-                          toast.success(`You're doing great! We'll check in on ${format(customDate, "MMM d")}. 💪`);
-                        }}
-                      >
-                        Got it! Check in on {format(customDate, "MMM d")} 💪
+                        Got it! {format(customDate, "MMM d")} 👍
                       </Button>
                     )}
                   </div>
@@ -415,5 +496,29 @@ const LeadDetail = () => {
     </div>
   );
 };
+
+// Reusable sheet option button
+const SheetOption = ({
+  icon,
+  title,
+  subtitle,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
+  >
+    <span className="shrink-0">{icon}</span>
+    <div>
+      <p className="font-bold text-foreground text-sm">{title}</p>
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
+    </div>
+  </button>
+);
 
 export default LeadDetail;
