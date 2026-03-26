@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LeadsProvider } from "@/context/LeadsContext";
+import { NotificationScheduler } from "@/components/NotificationScheduler";
 import BottomNav from "@/components/BottomNav";
 import HomePage from "./pages/HomePage";
 import VoiceCapture from "./pages/VoiceCapture";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/leads/:id" element={<LeadDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <NotificationScheduler />
           <BottomNav />
         </LeadsProvider>
       </BrowserRouter>
