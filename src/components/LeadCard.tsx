@@ -16,37 +16,41 @@ const LeadCard = ({ lead, index = 0, showCompleted = false }: LeadCardProps) => 
 
   return (
     <motion.button
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.04, duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       onClick={() => navigate(`/leads/${lead.id}`)}
-      className="w-full flex items-center gap-3 p-4 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors text-left"
+      className="w-full flex items-center gap-3.5 p-4 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200 text-left group"
     >
-      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-primary/8 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
         {lead.name[0]}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-card-foreground truncate">{lead.name}</p>
-        <p className="text-sm text-muted-foreground truncate">{lead.company}</p>
+        <p className="font-semibold text-card-foreground truncate text-[15px] leading-tight">
+          🎯 {lead.name}
+        </p>
+        <p className="text-[13px] text-muted-foreground truncate mt-0.5">
+          💼 {lead.company || "No company"}
+        </p>
         {showCompleted && lead.dateCompleted && (
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[12px] text-muted-foreground mt-0.5">
             {format(lead.dateCompleted, "MMM d, yyyy")}
           </p>
         )}
         {showCompleted && lead.outcomeNote && (
-          <p className="text-xs text-muted-foreground truncate mt-0.5 italic">
+          <p className="text-[12px] text-muted-foreground truncate mt-0.5 italic">
             {lead.outcomeNote}
           </p>
         )}
       </div>
       {showCompleted ? (
-        <span className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap bg-emerald-500/15 text-emerald-600 flex items-center gap-1">
-          <CheckCircle2 size={12} /> Done
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap bg-success/10 text-success border border-success/20 flex items-center gap-1">
+          <CheckCircle2 size={11} /> Done
         </span>
       ) : (
         <StatusBadge lead={lead} />
       )}
-      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+      <ChevronRight size={14} className="text-muted-foreground/40 shrink-0 group-hover:text-muted-foreground transition-colors" />
     </motion.button>
   );
 };

@@ -5,8 +5,7 @@ import { format } from "date-fns";
 import {
   ArrowLeft, Send, Clock, CheckCircle2, CalendarClock,
   ArrowRight, CalendarIcon, X, Play, Pause, Archive,
-  ArchiveRestore, Building2, Tag, CalendarDays,
-  MessageSquare, Mic, RotateCcw, Trophy
+  ArchiveRestore, RotateCcw, Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +41,8 @@ const LeadDetail = () => {
 
   if (!lead) {
     return (
-      <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto text-center">
-        <p className="text-muted-foreground">Lead not found.</p>
+      <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto text-center">
+        <p className="text-muted-foreground text-[14px]">Lead not found.</p>
         <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">Go back</Button>
       </div>
     );
@@ -51,10 +50,10 @@ const LeadDetail = () => {
 
   const daysDiff = getDaysDiff(lead);
   const followUpLabel = daysDiff < 0
-    ? `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? "s" : ""}`
-    : daysDiff === 0 ? "Due today"
-    : `In ${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
-  const followUpColor = daysDiff < 0 ? "text-destructive" : daysDiff === 0 ? "text-yellow-600" : "text-primary";
+    ? `⏳ Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? "s" : ""}`
+    : daysDiff === 0 ? "⏰ Due today"
+    : `📆 In ${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
+  const followUpColor = daysDiff < 0 ? "text-destructive" : daysDiff === 0 ? "text-warning" : "text-muted-foreground";
 
   const togglePlayback = () => {
     if (!audioRef.current) return;
@@ -66,20 +65,20 @@ const LeadDetail = () => {
   const saveNotes = () => {
     updateLead(lead.id, { notes: notesValue.trim().slice(0, 1000) });
     setEditingNotes(false);
-    toast.success("Notes updated! ✍️");
+    toast.success("Notes updated ✍️");
   };
 
   const handleSnooze = (days: number) => {
     updateLead(lead.id, { dueDate: daysFromNow(days) });
     setActiveSheet(null);
-    toast.success(`Snoozed for ${days} day${days > 1 ? "s" : ""}. We'll remind you! 😴`);
+    toast.success(`Snoozed for ${days} day${days > 1 ? "s" : ""}.`);
   };
 
   const handleSnoozeCustom = () => {
     if (!customDate) return;
     updateLead(lead.id, { dueDate: customDate });
     setActiveSheet(null); setCustomDate(undefined);
-    toast.success(`Snoozed until ${format(customDate, "MMM d")}. You're on it! 📅`);
+    toast.success(`Snoozed until ${format(customDate, "MMM d")}.`);
   };
 
   const handleMarkCompleted = () => {
@@ -92,7 +91,7 @@ const LeadDetail = () => {
     });
     setActiveSheet(null);
     setOutcomeNote("");
-    toast.success("🎉 You did it! That's amazing!");
+    toast.success("🎉 You did it! That's amazing.");
     navigate("/");
   };
 
@@ -109,18 +108,18 @@ const LeadDetail = () => {
   const handleReschedule = (days: number) => {
     updateLead(lead.id, { dueDate: daysFromNow(days) });
     setActiveSheet(null);
-    toast.success(`You're doing great! We'll check in again in ${days} day${days > 1 ? "s" : ""}. 💪`);
+    toast.success(`Next check-in in ${days} day${days > 1 ? "s" : ""}. 💪`);
   };
 
   const handleArchive = () => {
     updateLead(lead.id, { archived: true });
-    toast.success("Archived. You can find them in All Leads. 📦");
+    toast.success("Archived. 📦");
     navigate("/");
   };
 
   const handleUnarchive = () => {
     updateLead(lead.id, { archived: false });
-    toast.success("Back in action! 🚀");
+    toast.success("Back in action. 🚀");
   };
 
   const handleReactivate = () => {
@@ -131,25 +130,29 @@ const LeadDetail = () => {
   };
 
   return (
-    <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
+    <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mb-6 font-semibold text-sm"
+        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 mb-6 text-[13px] font-medium"
       >
-        <ArrowLeft size={18} /> Back
+        <ArrowLeft size={16} strokeWidth={1.8} /> Back
       </button>
 
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      >
         {/* Header */}
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-extrabold text-xl shrink-0">
+        <div className="flex items-center gap-3.5 mb-2">
+          <div className="w-12 h-12 rounded-lg bg-primary/8 flex items-center justify-center text-primary font-semibold text-lg shrink-0">
             {lead.name[0]}
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-extrabold text-foreground truncate">{lead.name}</h1>
+            <h1 className="text-[22px] font-bold text-foreground truncate leading-tight">{lead.name}</h1>
             {lead.company && (
-              <p className="text-muted-foreground font-medium truncate flex items-center gap-1">
-                <Building2 size={14} /> {lead.company}
+              <p className="text-muted-foreground text-[13px] truncate flex items-center gap-1 mt-0.5">
+                💼 {lead.company}
               </p>
             )}
           </div>
@@ -158,60 +161,60 @@ const LeadDetail = () => {
         {/* Completed banner */}
         {lead.completed && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 p-3 rounded-lg bg-success/8 border border-success/20 flex items-center gap-2"
           >
-            <CheckCircle2 size={18} className="text-emerald-600" />
-            <span className="text-sm font-bold text-emerald-600">Completed! You nailed it! 🎉</span>
+            <CheckCircle2 size={16} className="text-success" />
+            <span className="text-[13px] font-semibold text-success">✅ Completed</span>
           </motion.div>
         )}
 
         {lead.archived && !lead.completed && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-4 p-3 rounded-lg bg-muted border border-border flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 p-3 rounded-lg bg-secondary border border-border flex items-center gap-2"
           >
-            <Archive size={18} className="text-muted-foreground" />
-            <span className="text-sm font-bold text-muted-foreground">Archived</span>
+            <Archive size={16} className="text-muted-foreground" />
+            <span className="text-[13px] font-semibold text-muted-foreground">📦 Archived</span>
           </motion.div>
         )}
 
-        {/* Outcome note for completed leads */}
+        {/* Outcome */}
         {lead.completed && lead.outcomeNote && (
-          <div className="mt-4 p-4 bg-card rounded-xl border border-border">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-              <Trophy size={13} /> Outcome
+          <div className="mt-4 p-4 bg-card rounded-xl border border-border shadow-card">
+            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1">
+              <Trophy size={12} /> Outcome
             </h2>
-            <p className="text-sm font-semibold text-foreground">{lead.outcomeNote}</p>
+            <p className="text-[14px] font-medium text-foreground">{lead.outcomeNote}</p>
           </div>
         )}
 
         {/* Context section */}
         <div className="mt-6 mb-6">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-            {lead.completed ? "Timeline" : "Context"}
+          <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
+            {lead.completed ? "📅 Timeline" : "Context"}
           </h2>
-          <div className="space-y-0 bg-card rounded-xl border border-border overflow-hidden">
-            <ContextRow icon={<CalendarDays size={15} />} label="When you met them" value={format(lead.createdAt, "MMM d, yyyy")} border />
-            <ContextRow icon={<Send size={15} />} label="Last contact" value={lead.lastContactDate ? format(lead.lastContactDate, "MMM d, yyyy") : "Not yet"} border />
-            <ContextRow icon={<Tag size={15} />} label="Category" value={lead.category} border={!lead.completed || !!lead.dateCompleted} />
+          <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden divide-y divide-border">
+            <ContextRow emoji="📅" label="When you met them" value={format(lead.createdAt, "MMM d, yyyy")} />
+            <ContextRow emoji="📞" label="Last contact" value={lead.lastContactDate ? format(lead.lastContactDate, "MMM d, yyyy") : "Not yet"} />
+            <ContextRow emoji="🎯" label="Category" value={lead.category} />
 
             {lead.completed && lead.dateCompleted && (
-              <ContextRow icon={<CheckCircle2 size={15} />} label="Completed" value={format(lead.dateCompleted, "MMM d, yyyy")} border={false} />
+              <ContextRow emoji="✅" label="Completed" value={format(lead.dateCompleted, "MMM d, yyyy")} />
             )}
 
             {!lead.completed && (
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
-                  <CalendarClock size={15} /> Follow-up by
+                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
+                  ⏰ Follow-up by
                 </span>
                 <div className="text-right">
-                  <span className="text-sm font-semibold text-foreground block">
+                  <span className="text-[13px] font-medium text-foreground block">
                     {format(lead.dueDate, "MMM d, yyyy")}
                   </span>
-                  <span className={`text-xs font-bold ${followUpColor}`}>{followUpLabel}</span>
+                  <span className={`text-[11px] font-semibold ${followUpColor}`}>{followUpLabel}</span>
                 </div>
               </div>
             )}
@@ -221,29 +224,29 @@ const LeadDetail = () => {
         {/* Notes */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <MessageSquare size={13} /> Notes & Context
+            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+              📝 Notes & Context
             </h2>
             {!editingNotes && (
-              <button onClick={startEditNotes} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+              <button onClick={startEditNotes} className="text-[12px] font-medium text-primary hover:text-primary/80 transition-colors duration-200">
                 Edit
               </button>
             )}
           </div>
           {editingNotes ? (
-            <div className="bg-card rounded-xl border border-border p-4">
-              <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} maxLength={1000} className="bg-background min-h-[100px] mb-3" placeholder="Add your notes..." />
+            <div className="bg-card rounded-xl border border-border shadow-card p-4">
+              <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} maxLength={1000} className="bg-background min-h-[100px] mb-3 text-[14px]" placeholder="Add your notes..." />
               <div className="flex gap-2">
-                <Button size="sm" onClick={saveNotes} className="font-bold">Got it! ✍️</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditingNotes(false)}>Cancel</Button>
+                <Button size="sm" onClick={saveNotes} className="font-semibold text-[13px]">Save ✍️</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingNotes(false)} className="text-[13px]">Cancel</Button>
               </div>
             </div>
           ) : (
-            <div className="bg-card rounded-xl border border-border p-4">
+            <div className="bg-card rounded-xl border border-border shadow-card p-4">
               {lead.notes ? (
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{lead.notes}</p>
+                <p className="text-[14px] text-foreground leading-relaxed whitespace-pre-wrap">{lead.notes}</p>
               ) : (
-                <p className="text-sm text-muted-foreground italic">No notes yet. Tap Edit to add some! ✍️</p>
+                <p className="text-[13px] text-muted-foreground">No notes yet. Tap Edit to add context.</p>
               )}
             </div>
           )}
@@ -252,18 +255,18 @@ const LeadDetail = () => {
         {/* Voice note */}
         {lead.audioUrl && (
           <div className="mb-6">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1">
-              <Mic size={13} /> Voice Note
+            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1">
+              🎤 Voice Note
             </h2>
-            <div className="bg-card rounded-xl border border-border p-4">
+            <div className="bg-card rounded-xl border border-border shadow-card p-4">
               <audio ref={audioRef} src={lead.audioUrl} onEnded={() => setIsPlaying(false)} className="hidden" />
               <div className="flex items-center gap-3">
-                <motion.button whileTap={{ scale: 0.9 }} onClick={togglePlayback} className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
-                  {isPlaying ? <Pause size={20} className="text-primary-foreground" /> : <Play size={20} className="text-primary-foreground ml-0.5" />}
+                <motion.button whileTap={{ scale: 0.95 }} onClick={togglePlayback} className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                  {isPlaying ? <Pause size={18} className="text-primary-foreground" /> : <Play size={18} className="text-primary-foreground ml-0.5" />}
                 </motion.button>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{isPlaying ? "Playing..." : "Tap to listen"}</p>
-                  <p className="text-xs text-muted-foreground">Voice note attached to this lead</p>
+                  <p className="text-[13px] font-medium text-foreground">{isPlaying ? "Playing..." : "Tap to listen"}</p>
+                  <p className="text-[11px] text-muted-foreground">Voice note attached</p>
                 </div>
               </div>
             </div>
@@ -272,37 +275,43 @@ const LeadDetail = () => {
 
         {/* Action buttons — active leads */}
         {!lead.completed && !lead.archived && (
-          <div className="space-y-3 mb-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Button size="lg" className="font-bold" onClick={() => setActiveSheet("reached-out")}>
-                <Send size={18} className="mr-2" /> Reached Out
+          <div className="space-y-2.5 mb-4">
+            <div className="grid grid-cols-2 gap-2.5">
+              <Button size="lg" className="font-semibold text-[14px]" onClick={() => setActiveSheet("reached-out")}>
+                📞 Reached Out
               </Button>
-              <Button size="lg" variant="secondary" className="font-bold" onClick={() => setActiveSheet("snooze")}>
-                <Clock size={18} className="mr-2" /> Snooze
+              <Button size="lg" variant="secondary" className="font-semibold text-[14px]" onClick={() => setActiveSheet("snooze")}>
+                ⏸️ Snooze
               </Button>
             </div>
-            <Button size="lg" variant="outline" className="w-full font-bold text-muted-foreground" onClick={handleArchive}>
-              <Archive size={18} className="mr-2" /> Archive
-            </Button>
+            <button
+              onClick={handleArchive}
+              className="w-full py-2.5 text-center text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
+            >
+              📦 Archive
+            </button>
           </div>
         )}
 
         {/* Completed lead actions */}
         {lead.completed && (
-          <div className="space-y-3 mb-4">
-            <Button size="lg" variant="outline" className="w-full font-bold" onClick={handleReactivate}>
-              <RotateCcw size={18} className="mr-2" /> Reactivate
+          <div className="space-y-2.5 mb-4">
+            <Button size="lg" variant="secondary" className="w-full font-semibold text-[14px]" onClick={handleReactivate}>
+              <RotateCcw size={16} className="mr-2" /> Reactivate
             </Button>
-            <Button size="lg" variant="outline" className="w-full font-bold text-muted-foreground" onClick={handleArchive}>
-              <Archive size={18} className="mr-2" /> Archive
-            </Button>
+            <button
+              onClick={handleArchive}
+              className="w-full py-2.5 text-center text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
+            >
+              📦 Archive
+            </button>
           </div>
         )}
 
         {/* Archived (not completed) */}
         {lead.archived && !lead.completed && (
-          <Button size="lg" variant="outline" className="w-full font-bold mb-4" onClick={handleUnarchive}>
-            <ArchiveRestore size={18} className="mr-2" /> Unarchive
+          <Button size="lg" variant="secondary" className="w-full font-semibold text-[14px] mb-4" onClick={handleUnarchive}>
+            <ArchiveRestore size={16} className="mr-2" /> Unarchive
           </Button>
         )}
       </motion.div>
@@ -315,7 +324,8 @@ const LeadDetail = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-foreground/30 flex items-end justify-center"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-end justify-center"
             onClick={() => { setActiveSheet(null); setCustomDate(undefined); setOutcomeNote(""); }}
           >
             <motion.div
@@ -324,40 +334,41 @@ const LeadDetail = () => {
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[480px] bg-card rounded-t-2xl border-t border-border p-5 pb-10"
+              className="w-full max-w-[480px] bg-card rounded-t-2xl border-t border-border shadow-modal p-5 pb-10"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-extrabold text-foreground">
-                  {activeSheet === "reached-out" && "Nice work! What's the update? 🙌"}
-                  {activeSheet === "snooze" && "When should we remind you? 😴"}
-                  {activeSheet === "reschedule" && "When should we check in again? 📅"}
-                  {activeSheet === "completing" && "🎉 You did it!"}
+              <div className="w-8 h-1 rounded-full bg-border mx-auto mb-4" />
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-[17px] font-bold text-foreground">
+                  {activeSheet === "reached-out" && "What's the update?"}
+                  {activeSheet === "snooze" && "⏸️ Snooze until..."}
+                  {activeSheet === "reschedule" && "📅 Next check-in"}
+                  {activeSheet === "completing" && "🎉 You've Got This"}
                 </h3>
                 <button
                   onClick={() => { setActiveSheet(null); setCustomDate(undefined); setOutcomeNote(""); }}
-                  className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
                 >
-                  <X size={20} />
+                  <X size={16} />
                 </button>
               </div>
 
               {/* Reached Out options */}
               {activeSheet === "reached-out" && (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   <SheetOption
-                    icon={<CalendarClock size={20} className="text-primary" />}
+                    emoji="📅"
                     title="Schedule next follow-up"
                     subtitle="Pick a new follow-up date"
                     onClick={handleReachedOutSnooze}
                   />
                   <SheetOption
-                    icon={<CheckCircle2 size={20} className="text-emerald-600" />}
+                    emoji="✅"
                     title="We're good! Mark as completed"
-                    subtitle="That's amazing — celebrate your win! 🎉"
+                    subtitle="Celebrate your win"
                     onClick={() => setActiveSheet("completing")}
                   />
                   <SheetOption
-                    icon={<ArrowRight size={20} className="text-muted-foreground" />}
+                    emoji="→"
                     title="Keep following up"
                     subtitle="Set a new follow-up date"
                     onClick={handleKeepFollowing}
@@ -365,10 +376,10 @@ const LeadDetail = () => {
                 </div>
               )}
 
-              {/* Completing — outcome note */}
+              {/* Completing */}
               {activeSheet === "completing" && (
                 <div className="flex flex-col gap-4">
-                  <p className="text-sm text-muted-foreground font-medium">
+                  <p className="text-[13px] text-muted-foreground">
                     That's amazing! What was the outcome?
                   </p>
                   <Input
@@ -376,25 +387,25 @@ const LeadDetail = () => {
                     value={outcomeNote}
                     maxLength={200}
                     onChange={(e) => setOutcomeNote(e.target.value)}
-                    className="bg-background"
+                    className="bg-background text-[14px]"
                   />
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {["Partnership deal signed", "Booked speaking gig", "Got the intro", "Deal closed"].map((ex) => (
                       <button
                         key={ex}
                         onClick={() => setOutcomeNote(ex)}
-                        className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-background hover:border-primary/50 transition-colors text-foreground"
+                        className="px-3 py-1.5 rounded-lg text-[12px] font-medium border border-border bg-secondary hover:bg-accent transition-colors duration-200 text-secondary-foreground"
                       >
                         {ex}
                       </button>
                     ))}
                   </div>
-                  <Button size="lg" className="font-bold" onClick={handleMarkCompleted}>
+                  <Button size="lg" className="font-semibold text-[14px]" onClick={handleMarkCompleted}>
                     Mark as Completed 🎉
                   </Button>
                   <button
                     onClick={() => setActiveSheet("reached-out")}
-                    className="text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
+                    className="text-center text-[13px] text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
                   >
                     ← Back
                   </button>
@@ -403,27 +414,27 @@ const LeadDetail = () => {
 
               {/* Snooze / Reschedule */}
               {(activeSheet === "snooze" || activeSheet === "reschedule") && (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {[
                     { days: 1, label: "1 day", sub: "Remind me tomorrow" },
                     { days: 3, label: "3 days", sub: "Check back in a few days" },
-                    { days: 7, label: "1 week", sub: "Come back to this next week" },
+                    { days: 7, label: "1 week", sub: "Come back next week" },
                     { days: 14, label: "2 weeks", sub: "Circle back later" },
                   ].map((opt) => (
                     <SheetOption
                       key={opt.days}
-                      icon={<CalendarClock size={20} className="text-primary" />}
+                      emoji="📆"
                       title={activeSheet === "snooze" ? `Snooze ${opt.label}` : `In ${opt.label}`}
                       subtitle={opt.sub}
                       onClick={() => activeSheet === "snooze" ? handleSnooze(opt.days) : handleReschedule(opt.days)}
                     />
                   ))}
-                  <div className="pt-2 border-t border-border mt-1">
-                    <p className="text-xs font-bold text-muted-foreground mb-2">Pick a custom date</p>
+                  <div className="pt-3 border-t border-border mt-1">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Custom date</p>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className={cn("w-full justify-start text-left font-medium", !customDate && "text-muted-foreground")}>
-                          <CalendarIcon size={16} className="mr-2" />
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-medium text-[13px]", !customDate && "text-muted-foreground")}>
+                          <CalendarIcon size={14} className="mr-2" />
                           {customDate ? format(customDate, "EEEE, MMMM d") : "Choose a date..."}
                         </Button>
                       </PopoverTrigger>
@@ -441,14 +452,14 @@ const LeadDetail = () => {
                     {customDate && (
                       <Button
                         size="lg"
-                        className="w-full mt-3 font-bold"
+                        className="w-full mt-3 font-semibold text-[14px]"
                         onClick={activeSheet === "snooze" ? handleSnoozeCustom : () => {
                           updateLead(lead.id, { dueDate: customDate });
                           setActiveSheet(null); setCustomDate(undefined);
-                          toast.success(`Got it! We'll check in on ${format(customDate, "MMM d")}. 💪`);
+                          toast.success(`Next check-in on ${format(customDate, "MMM d")}. 💪`);
                         }}
                       >
-                        Got it! {format(customDate, "MMM d")} 👍
+                        Confirm — {format(customDate, "MMM d")}
                       </Button>
                     )}
                   </div>
@@ -462,19 +473,19 @@ const LeadDetail = () => {
   );
 };
 
-const ContextRow = ({ icon, label, value, border }: { icon: React.ReactNode; label: string; value: string; border: boolean }) => (
-  <div className={`flex items-center justify-between px-4 py-3 ${border ? "border-b border-border" : ""}`}>
-    <span className="text-sm text-muted-foreground flex items-center gap-2">{icon} {label}</span>
-    <span className="text-sm font-semibold text-foreground">{value}</span>
+const ContextRow = ({ emoji, label, value }: { emoji: string; label: string; value: string }) => (
+  <div className="flex items-center justify-between px-4 py-3">
+    <span className="text-[13px] text-muted-foreground flex items-center gap-2">{emoji} {label}</span>
+    <span className="text-[13px] font-medium text-foreground">{value}</span>
   </div>
 );
 
-const SheetOption = ({ icon, title, subtitle, onClick }: { icon: React.ReactNode; title: string; subtitle: string; onClick: () => void }) => (
-  <button onClick={onClick} className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left">
-    <span className="shrink-0">{icon}</span>
+const SheetOption = ({ emoji, title, subtitle, onClick }: { emoji: string; title: string; subtitle: string; onClick: () => void }) => (
+  <button onClick={onClick} className="flex items-center gap-3 p-3.5 bg-secondary rounded-xl hover:bg-accent transition-colors duration-200 text-left">
+    <span className="text-[18px] shrink-0">{emoji}</span>
     <div>
-      <p className="font-bold text-foreground text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground">{subtitle}</p>
+      <p className="font-medium text-foreground text-[14px]">{title}</p>
+      <p className="text-[12px] text-muted-foreground">{subtitle}</p>
     </div>
   </button>
 );

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mic, PenLine, PartyPopper, Trophy } from "lucide-react";
+import { Mic, PenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/context/LeadsContext";
-import { getLeadStatus, getDaysDiff } from "@/data/sampleLeads";
+import { getLeadStatus } from "@/data/sampleLeads";
 import LeadCard from "@/components/LeadCard";
 
 type Tab = "active" | "completed";
@@ -28,70 +28,71 @@ const AllLeads = () => {
     .sort((a, b) => {
       const dateA = a.dateCompleted?.getTime() || 0;
       const dateB = b.dateCompleted?.getTime() || 0;
-      return dateB - dateA; // newest first
+      return dateB - dateA;
     });
 
   return (
-    <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
+    <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        <h1 className="text-2xl font-extrabold text-foreground mb-4">
-          All Leads 📋
+        <h1 className="text-[28px] font-bold text-foreground tracking-tight mb-5">
+          All Leads
         </h1>
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex bg-muted rounded-lg p-1 mb-6">
+      <div className="flex border-b border-border mb-5">
         <button
           onClick={() => setTab("active")}
-          className={`flex-1 py-2.5 px-4 rounded-md text-sm font-bold transition-colors ${
+          className={`flex-1 pb-2.5 text-[13px] font-semibold transition-colors duration-200 border-b-2 ${
             tab === "active"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Active ({activeLeads.length})
         </button>
         <button
           onClick={() => setTab("completed")}
-          className={`flex-1 py-2.5 px-4 rounded-md text-sm font-bold transition-colors ${
+          className={`flex-1 pb-2.5 text-[13px] font-semibold transition-colors duration-200 border-b-2 ${
             tab === "completed"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Completed ({completedLeads.length})
+          ✅ Completed ({completedLeads.length})
         </button>
       </div>
 
       {/* Active tab */}
       {tab === "active" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {activeLeads.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-3 py-10 bg-card rounded-xl border border-border"
+              className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
             >
-              <PartyPopper size={36} className="text-primary" />
-              <p className="text-foreground font-bold">You're all caught up! 🎉</p>
-              <p className="text-muted-foreground text-sm font-medium text-center px-6">
+              <p className="text-[32px]">✨</p>
+              <p className="text-foreground font-semibold text-[15px]">You're all caught up!</p>
+              <p className="text-muted-foreground text-[13px]">
                 Add a new lead to get started.
               </p>
-              <div className="flex gap-3 mt-2">
+              <div className="flex gap-2.5 mt-3">
                 <button
                   onClick={() => navigate("/voice")}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-primary/10 rounded-lg text-primary text-sm font-bold"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold"
                 >
-                  <Mic size={16} /> Voice Note
+                  <Mic size={14} /> Voice Note
                 </button>
                 <button
                   onClick={() => navigate("/add")}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 rounded-lg text-accent text-sm font-bold"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-[13px] font-semibold"
                 >
-                  <PenLine size={16} /> Quick Note
+                  <PenLine size={14} /> Quick Note
                 </button>
               </div>
             </motion.div>
@@ -105,17 +106,17 @@ const AllLeads = () => {
 
       {/* Completed tab */}
       {tab === "completed" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {completedLeads.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-3 py-10 bg-card rounded-xl border border-border"
+              className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
             >
-              <Trophy size={36} className="text-muted-foreground" />
-              <p className="text-foreground font-bold">No wins yet!</p>
-              <p className="text-muted-foreground text-sm font-medium text-center px-6">
-                Keep going — you'll be here soon. 💪
+              <p className="text-[32px]">💪</p>
+              <p className="text-foreground font-semibold text-[15px]">No wins yet.</p>
+              <p className="text-muted-foreground text-[13px]">
+                Keep going — you'll get there.
               </p>
             </motion.div>
           ) : (
