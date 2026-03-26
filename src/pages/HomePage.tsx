@@ -2,7 +2,8 @@ import { useState } from "react";
 import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, PenLine, Settings, Trash2, X, Bell, BellOff } from "lucide-react";
+import { Mic, PenLine, Settings, Trash2, X, Bell, BellOff, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ const HomePage = () => {
   const { leads, clearAllData } = useLeads();
   const [showSettings, setShowSettings] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const { settings: notifSettings, update: updateNotif } = useNotificationSettings();
 
   const followUps = leads
@@ -131,6 +133,18 @@ const HomePage = () => {
                   <X size={14} />
                 </button>
               </div>
+
+              {/* About Section */}
+              <button
+                onClick={() => setShowAbout(true)}
+                className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-accent transition-colors duration-200 text-left mb-5 pb-5 border-b border-border"
+              >
+                <Info size={14} className="text-primary" />
+                <div>
+                  <p className="text-[13px] font-medium text-foreground">About Follow Through</p>
+                  <p className="text-[11px] text-muted-foreground">Learn what this app is about</p>
+                </div>
+              </button>
 
               {/* Notifications Section */}
               <div className="mb-5 pb-5 border-b border-border">
@@ -307,6 +321,57 @@ const HomePage = () => {
           </motion.button>
         </div>
       </section>
+
+      {/* About Modal */}
+      <AnimatePresence>
+        {showAbout && (
+          <motion.div
+            key="about-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowAbout(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[500px] bg-card rounded-xl border border-border shadow-modal p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-[24px] font-bold text-foreground">Follow Through</h2>
+                <button
+                  onClick={() => setShowAbout(false)}
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground -mt-1 -mr-1"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <p className="text-[14px] text-secondary-foreground leading-relaxed">
+                  Follow Through App is designed for high-level leaders and entrepreneurs who attract more opportunities than they can manage. When you're juggling corporate responsibilities and multiple income streams, opportunities slip through the cracks. You meet people at events. You get emails with proposals. And then... life happens. You forget who you met, why they matter, and when you committed to follow up.
+                </p>
+                <p className="text-[14px] text-secondary-foreground leading-relaxed">
+                  Follow Through App solves this. Capture leads fast. Get reminded what needs attention. Track what actually converts. Stay on top of your most important relationships without the mental overhead.
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full font-semibold text-[14px]"
+                onClick={() => setShowAbout(false)}
+              >
+                Got It
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
