@@ -33,6 +33,129 @@ interface LeadFormData {
   notes: string;
 }
 
+const WelcomeHero = () => {
+  const nodePositions = [
+    { cx: 120, cy: 40, delay: 0.4 },
+    { cx: 200, cy: 80, delay: 0.6 },
+    { cx: 60, cy: 100, delay: 0.8 },
+    { cx: 180, cy: 160, delay: 1.0 },
+  ];
+
+  return (
+    <div className="flex justify-center mb-8">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        className="relative w-[240px] h-[200px]"
+      >
+        {/* Glow backdrop */}
+        <motion.div
+          className="absolute inset-0 rounded-full bg-accent opacity-60 blur-3xl"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1.2 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          style={{ top: "20%", left: "15%", width: "70%", height: "60%" }}
+        />
+
+        <svg viewBox="0 0 240 200" className="w-full h-full relative z-10">
+          <defs>
+            <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="hsl(211 100% 40%)" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="hsl(211 100% 40%)" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
+          {/* Connecting lines from center to nodes */}
+          {nodePositions.map((node, i) => (
+            <motion.line
+              key={`line-${i}`}
+              x1="120" y1="100"
+              x2={node.cx} y2={node.cy}
+              stroke="hsl(211 100% 40%)"
+              strokeOpacity="0.25"
+              strokeWidth="1.5"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.6, delay: node.delay, ease: "easeOut" }}
+            />
+          ))}
+
+          {/* Center glow circle */}
+          <motion.circle
+            cx="120" cy="100" r="32"
+            fill="url(#centerGlow)"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+          />
+
+          {/* Center icon - crosshair/target */}
+          <motion.circle
+            cx="120" cy="100" r="18"
+            fill="none"
+            stroke="hsl(211 100% 40%)"
+            strokeWidth="2.5"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 180, delay: 0.15 }}
+          />
+          <motion.circle
+            cx="120" cy="100" r="6"
+            fill="hsl(211 100% 40%)"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.4, type: "spring", stiffness: 250, delay: 0.3 }}
+          />
+
+          {/* Outer ring pulse */}
+          <motion.circle
+            cx="120" cy="100" r="28"
+            fill="none"
+            stroke="hsl(211 100% 40%)"
+            strokeWidth="1"
+            strokeOpacity="0.15"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+          />
+
+          {/* Orbiting nodes */}
+          {nodePositions.map((node, i) => (
+            <motion.circle
+              key={`node-${i}`}
+              cx={node.cx} cy={node.cy} r="7"
+              fill="hsl(213 94% 95%)"
+              stroke="hsl(211 100% 40%)"
+              strokeWidth="2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, type: "spring", stiffness: 200, delay: node.delay + 0.2 }}
+            />
+          ))}
+
+          {/* Small decorative dots */}
+          {[
+            { cx: 45, cy: 55, delay: 1.1 },
+            { cx: 195, cy: 140, delay: 1.3 },
+            { cx: 85, cy: 165, delay: 1.2 },
+          ].map((dot, i) => (
+            <motion.circle
+              key={`dot-${i}`}
+              cx={dot.cx} cy={dot.cy} r="3"
+              fill="hsl(211 100% 40%)"
+              fillOpacity="0.3"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3, delay: dot.delay }}
+            />
+          ))}
+        </svg>
+      </motion.div>
+    </div>
+  );
+};
+
 const Onboarding = ({ onComplete }: OnboardingProps) => {
   const { addLead } = useLeads();
   const [step, setStep] = useState(0);
@@ -108,6 +231,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="p-8"
             >
+              <WelcomeHero />
               <h1 className="text-[24px] font-bold text-foreground mb-4">
                 Follow Through App
               </h1>
