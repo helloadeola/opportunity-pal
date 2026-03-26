@@ -17,12 +17,12 @@ import { useLeads } from "@/context/LeadsContext";
 import FollowUpPicker from "@/components/voice/FollowUpPicker";
 
 const categories = [
-  "Opportunity",
-  "Warm Lead",
-  "Speaking Engagement",
-  "Partnership",
-  "Collaboration",
-  "Other",
+  { value: "Opportunity", emoji: "💡" },
+  { value: "Warm Lead", emoji: "🔥" },
+  { value: "Speaking Engagement", emoji: "🎤" },
+  { value: "Partnership", emoji: "🤝" },
+  { value: "Collaboration", emoji: "📊" },
+  { value: "Other", emoji: "🔗" },
 ];
 
 const QuickNote = () => {
@@ -40,8 +40,8 @@ const QuickNote = () => {
 
   const validate = () => {
     const newErrors: { name?: string; category?: string } = {};
-    if (!name.trim()) newErrors.name = "Hey, let's give this person a name! 😊";
-    if (!category) newErrors.category = "What category fits best? Pick one! ✨";
+    if (!name.trim()) newErrors.name = "Give this person a name";
+    if (!category) newErrors.category = "Pick a category";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -58,40 +58,41 @@ const QuickNote = () => {
       createdAt: new Date(),
     });
 
-    toast.success(`Saved! We'll remind you about ${name.trim()}. 🎉`);
+    toast.success(`Saved! We'll remind you about ${name.trim()}.`);
     navigate("/");
   };
 
   return (
-    <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
-      <div className="flex items-start justify-between mb-4">
+    <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
+      <div className="flex items-start justify-between mb-6">
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
-          <h1 className="text-2xl font-extrabold text-foreground mb-1">
-            Add a Quick Note ✏️
+          <h1 className="text-[22px] font-bold text-foreground leading-tight">
+            📝 Quick Note
           </h1>
-          <p className="text-muted-foreground font-medium">
+          <p className="text-muted-foreground text-[13px] mt-1">
             Capture it before it slips away.
           </p>
         </motion.div>
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -mr-2 -mt-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+          className="p-2 -mr-2 -mt-1 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
         >
-          <X size={22} />
+          <X size={18} />
         </button>
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex flex-col gap-4 mt-6"
+        transition={{ delay: 0.1, duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="flex flex-col gap-5"
       >
         <div>
-          <label className="text-sm font-bold text-foreground mb-1.5 block">
+          <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
             Name <span className="text-destructive">*</span>
           </label>
           <Input
@@ -102,7 +103,7 @@ const QuickNote = () => {
               setName(e.target.value);
               if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
             }}
-            className={`bg-card ${errors.name ? "border-destructive" : ""}`}
+            className={`bg-card text-[14px] ${errors.name ? "border-destructive" : ""}`}
           />
           <AnimatePresence>
             {errors.name && (
@@ -110,7 +111,7 @@ const QuickNote = () => {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="text-sm text-destructive mt-1.5 font-medium"
+                className="text-[12px] text-destructive mt-1.5 font-medium"
               >
                 {errors.name}
               </motion.p>
@@ -119,18 +120,18 @@ const QuickNote = () => {
         </div>
 
         <div>
-          <label className="text-sm font-bold text-foreground mb-1.5 block">Company</label>
+          <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Company</label>
           <Input
             placeholder="Where are they from?"
             value={company}
             maxLength={100}
             onChange={(e) => setCompany(e.target.value)}
-            className="bg-card"
+            className="bg-card text-[14px]"
           />
         </div>
 
         <div>
-          <label className="text-sm font-bold text-foreground mb-1.5 block">
+          <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
             Category <span className="text-destructive">*</span>
           </label>
           <Select
@@ -140,13 +141,13 @@ const QuickNote = () => {
               if (errors.category) setErrors((prev) => ({ ...prev, category: undefined }));
             }}
           >
-            <SelectTrigger className={`bg-card ${errors.category ? "border-destructive" : ""}`}>
+            <SelectTrigger className={`bg-card text-[14px] ${errors.category ? "border-destructive" : ""}`}>
               <SelectValue placeholder="What kind of lead?" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.emoji} {cat.value}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -157,7 +158,7 @@ const QuickNote = () => {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="text-sm text-destructive mt-1.5 font-medium"
+                className="text-[12px] text-destructive mt-1.5 font-medium"
               >
                 {errors.category}
               </motion.p>
@@ -166,20 +167,20 @@ const QuickNote = () => {
         </div>
 
         <div>
-          <label className="text-sm font-bold text-foreground mb-1.5 block">Notes</label>
+          <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Notes</label>
           <Textarea
             placeholder="Anything you want to remember..."
             value={notes}
             maxLength={500}
             onChange={(e) => setNotes(e.target.value)}
-            className="bg-card min-h-[100px]"
+            className="bg-card min-h-[100px] text-[14px]"
           />
         </div>
 
         <FollowUpPicker value={dueDate} onChange={setDueDate} />
 
-        <Button onClick={handleSave} size="lg" className="mt-2 font-bold text-base">
-          Save Lead 🚀
+        <Button onClick={handleSave} size="lg" className="mt-1 font-semibold text-[14px]">
+          Save Lead →
         </Button>
       </motion.div>
     </div>

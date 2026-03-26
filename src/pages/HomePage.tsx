@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getLeadStatus } from "@/data/sampleLeads";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, PenLine, PartyPopper, Settings, Trash2, X, Bell, BellOff } from "lucide-react";
+import { Mic, PenLine, Settings, Trash2, X, Bell, BellOff } from "lucide-react";
 import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ import {
 } from "@/hooks/useNotificationSettings";
 
 const timeOptions = Array.from({ length: 14 }, (_, i) => {
-  const hour = i + 5; // 5 AM to 6 PM
+  const hour = i + 5;
   const label = hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`;
   return { value: hour, label };
 });
@@ -63,7 +63,7 @@ const HomePage = () => {
     if (enabled) {
       const permStatus = getPermissionStatus();
       if (permStatus === "unsupported") {
-        toast.error("Your browser doesn't support notifications 😔");
+        toast.error("Your browser doesn't support notifications.");
         return;
       }
       if (permStatus === "denied") {
@@ -79,33 +79,36 @@ const HomePage = () => {
       toast.success("Reminders enabled! We'll nudge you when it's time. 🔔");
     } else {
       updateNotif({ enabled: false });
-      toast.success("Reminders turned off. You can re-enable anytime. 🔕");
+      toast.success("Reminders turned off.");
     }
   };
 
   return (
-    <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
+    <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         className="mb-8"
       >
         <div className="flex items-start justify-between">
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-            Follow Through ✨
-          </h1>
+          <div>
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight leading-tight">
+              Follow Through
+            </h1>
+            <p className="text-muted-foreground mt-1 text-[14px]">
+              {followUps.length > 0
+                ? `You have ${followUps.length} follow-up${followUps.length > 1 ? "s" : ""} today.`
+                : "You're on track. ✨"}
+            </p>
+          </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="p-2 -mr-2 -mt-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+            className="p-2 -mr-2 -mt-1 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground hover:text-foreground"
           >
-            <Settings size={20} />
+            <Settings size={18} strokeWidth={1.8} />
           </button>
         </div>
-        <p className="text-muted-foreground mt-1 font-medium">
-          {followUps.length > 0
-            ? "You've got this. Here's who needs you today."
-            : "Looking good! Nothing urgent right now."}
-        </p>
       </motion.div>
 
       {/* Settings panel */}
@@ -115,36 +118,36 @@ const HomePage = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             className="mb-6 overflow-hidden"
           >
-            <div className="p-4 bg-card rounded-xl border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-bold text-foreground">Settings</p>
+            <div className="p-5 bg-card rounded-xl border border-border shadow-card">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-[15px] font-semibold text-foreground">⚙️ Settings</h3>
                 <button
                   onClick={() => { setShowSettings(false); setConfirmClear(false); }}
-                  className="p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
                 >
-                  <X size={16} />
+                  <X size={14} />
                 </button>
               </div>
 
               {/* Notifications Section */}
-              <div className="mb-4 pb-4 border-b border-border">
+              <div className="mb-5 pb-5 border-b border-border">
                 <div className="flex items-center gap-2 mb-3">
                   {notifSettings.enabled ? (
-                    <Bell size={16} className="text-primary" />
+                    <Bell size={14} className="text-primary" />
                   ) : (
-                    <BellOff size={16} className="text-muted-foreground" />
+                    <BellOff size={14} className="text-muted-foreground" />
                   )}
-                  <p className="text-sm font-bold text-foreground">Notifications</p>
+                  <p className="text-[13px] font-semibold text-foreground">📬 Notifications</p>
                 </div>
 
-                {/* Toggle */}
-                <div className="flex items-center justify-between mb-3 p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-3 p-3 rounded-lg bg-secondary">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Daily reminder</p>
-                    <p className="text-xs text-muted-foreground">
-                      Get nudged about your follow-ups
+                    <p className="text-[13px] font-medium text-foreground">Daily reminder</p>
+                    <p className="text-[12px] text-muted-foreground">
+                      Get a morning briefing of leads due today
                     </p>
                   </div>
                   <Switch
@@ -153,7 +156,6 @@ const HomePage = () => {
                   />
                 </div>
 
-                {/* Time & Frequency — only when enabled */}
                 <AnimatePresence>
                   {notifSettings.enabled && (
                     <motion.div
@@ -163,14 +165,14 @@ const HomePage = () => {
                       className="space-y-3 overflow-hidden"
                     >
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground mb-1 block">
+                        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                           Reminder time
                         </label>
                         <Select
                           value={String(notifSettings.hour)}
                           onValueChange={(v) => updateNotif({ hour: parseInt(v, 10) })}
                         >
-                          <SelectTrigger className="bg-background">
+                          <SelectTrigger className="bg-background text-[13px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -184,8 +186,8 @@ const HomePage = () => {
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground mb-1 block">
-                          How often
+                        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                          Frequency
                         </label>
                         <Select
                           value={notifSettings.frequency}
@@ -193,7 +195,7 @@ const HomePage = () => {
                             updateNotif({ frequency: v as "daily" | "3x-week" | "weekly" })
                           }
                         >
-                          <SelectTrigger className="bg-background">
+                          <SelectTrigger className="bg-background text-[13px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -206,7 +208,7 @@ const HomePage = () => {
                         </Select>
                       </div>
 
-                      <p className="text-xs text-muted-foreground italic pt-1">
+                      <p className="text-[11px] text-muted-foreground pt-1">
                         Keep the app open or installed for notifications to work.
                       </p>
                     </motion.div>
@@ -218,19 +220,19 @@ const HomePage = () => {
               {!confirmClear ? (
                 <button
                   onClick={() => setConfirmClear(true)}
-                  className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-destructive/10 transition-colors text-left"
+                  className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-destructive/8 transition-colors duration-200 text-left"
                 >
-                  <Trash2 size={16} className="text-destructive" />
+                  <Trash2 size={14} className="text-destructive" />
                   <div>
-                    <p className="text-sm font-bold text-destructive">Clear all data</p>
-                    <p className="text-xs text-muted-foreground">Reset to sample leads (for testing)</p>
+                    <p className="text-[13px] font-medium text-destructive">🗑️ Clear all data</p>
+                    <p className="text-[11px] text-muted-foreground">Reset to sample leads</p>
                   </div>
                 </button>
               ) : (
-                <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                  <p className="text-sm font-bold text-foreground mb-1">Are you sure?</p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    This will erase all your leads and reset to sample data. Can't undo this!
+                <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <p className="text-[13px] font-semibold text-foreground mb-1">Are you sure?</p>
+                  <p className="text-[12px] text-muted-foreground mb-3">
+                    This will erase all your leads and reset to sample data.
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -238,15 +240,15 @@ const HomePage = () => {
                         clearAllData();
                         setConfirmClear(false);
                         setShowSettings(false);
-                        toast.success("All cleared! Fresh start. 🧹");
+                        toast.success("All cleared! Fresh start.");
                       }}
-                      className="flex-1 py-2 px-3 rounded-lg bg-destructive text-destructive-foreground text-sm font-bold"
+                      className="flex-1 py-2 px-3 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-semibold"
                     >
                       Yes, clear it
                     </button>
                     <button
                       onClick={() => setConfirmClear(false)}
-                      className="flex-1 py-2 px-3 rounded-lg bg-muted text-foreground text-sm font-bold"
+                      className="flex-1 py-2 px-3 rounded-lg bg-secondary text-foreground text-[13px] font-semibold"
                     >
                       Never mind
                     </button>
@@ -259,20 +261,20 @@ const HomePage = () => {
       </AnimatePresence>
 
       <section className="mb-8">
-        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
           Today's Follow-Ups
         </h2>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {followUps.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-3 py-8 bg-card rounded-xl border border-border"
+              className="flex flex-col items-center gap-3 py-10 bg-card rounded-xl border border-border shadow-card"
             >
-              <PartyPopper size={36} className="text-primary" />
-              <p className="text-foreground font-bold">You're all caught up! 🎉</p>
-              <p className="text-muted-foreground text-sm font-medium">
-                No follow-ups due right now. Go relax!
+              <p className="text-[32px]">✨</p>
+              <p className="text-foreground font-semibold text-[15px]">You're on track.</p>
+              <p className="text-muted-foreground text-[13px]">
+                No follow-ups due right now. Great work.
               </p>
             </motion.div>
           ) : (
@@ -284,25 +286,25 @@ const HomePage = () => {
       </section>
 
       <section>
-        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
           Quick Capture
         </h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <motion.button
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/voice")}
-            className="flex flex-col items-center gap-2 p-5 bg-primary/10 rounded-xl border border-primary/20 hover:bg-primary/15 transition-colors"
+            className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
           >
-            <Mic size={28} className="text-primary" />
-            <span className="font-bold text-primary text-sm">Voice Note</span>
+            <Mic size={22} strokeWidth={1.8} className="text-primary" />
+            <span className="font-semibold text-primary text-[13px]">🎤 Voice Note</span>
           </motion.button>
           <motion.button
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/add")}
-            className="flex flex-col items-center gap-2 p-5 bg-accent/10 rounded-xl border border-accent/20 hover:bg-accent/15 transition-colors"
+            className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
           >
-            <PenLine size={28} className="text-accent" />
-            <span className="font-bold text-accent text-sm">Quick Note</span>
+            <PenLine size={22} strokeWidth={1.8} className="text-foreground" />
+            <span className="font-semibold text-foreground text-[13px]">📝 Quick Note</span>
           </motion.button>
         </div>
       </section>
