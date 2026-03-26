@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Play, Pause, RotateCcw, X, ArrowRight } from "lucide-react";
+import { Mic, Square, Play, Pause, RotateCcw, X, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLeads } from "@/context/LeadsContext";
 import LeadForm from "@/components/voice/LeadForm";
+import { extractFromTranscript, type ExtractedData } from "@/lib/transcriptExtractor";
 
 const MAX_SECONDS = 60;
 const WARN_SECONDS = 50;
@@ -19,6 +20,31 @@ const formatTime = (seconds: number) => {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
+// SpeechRecognition types
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+}
+
 const VoiceCapture = () => {
   const navigate = useNavigate();
   const { addLead } = useLeads();
@@ -28,11 +54,17 @@ const VoiceCapture = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [context, setContext] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptFailed, setTranscriptFailed] = useState(false);
+  const [extracted, setExtracted] = useState<ExtractedData | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const transcriptRef = useRef("");
 
   useEffect(() => {
     return () => {
@@ -41,12 +73,18 @@ const VoiceCapture = () => {
       if (mediaRecorderRef.current?.state === "recording") {
         mediaRecorderRef.current.stop();
       }
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch { /* ignore */ }
+      }
     };
   }, [audioUrl]);
 
   const stopRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     mediaRecorderRef.current?.stop();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* ignore */ }
+    }
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -55,6 +93,10 @@ const VoiceCapture = () => {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+      transcriptRef.current = "";
+      setTranscript("");
+      setTranscriptFailed(false);
+      setExtracted(null);
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -65,8 +107,63 @@ const VoiceCapture = () => {
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         stream.getTracks().forEach((t) => t.stop());
+
+        // Finalize transcript
+        const finalTranscript = transcriptRef.current.trim();
+        setTranscript(finalTranscript);
+        setIsTranscribing(false);
+
+        if (finalTranscript) {
+          const data = extractFromTranscript(finalTranscript);
+          setExtracted(data);
+        } else {
+          setTranscriptFailed(true);
+        }
+
         setPhase("review");
       };
+
+      // Start Speech Recognition
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognitionCtor) {
+        const recognition = new SpeechRecognitionCtor();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        let finalText = "";
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          let interim = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalText += result[0].transcript + " ";
+            } else {
+              interim += result[0].transcript;
+            }
+          }
+          transcriptRef.current = finalText + interim;
+          setTranscript(transcriptRef.current);
+        };
+
+        recognition.onerror = () => {
+          // Speech recognition failed — we'll handle it gracefully
+        };
+
+        recognition.onend = () => {
+          // Finalize what we have
+          transcriptRef.current = finalText;
+        };
+
+        try {
+          recognition.start();
+          recognitionRef.current = recognition;
+          setIsTranscribing(true);
+        } catch {
+          // browser blocked it
+        }
+      }
 
       mediaRecorder.start();
       setElapsed(0);
@@ -77,6 +174,9 @@ const VoiceCapture = () => {
           if (next >= MAX_SECONDS) {
             if (timerRef.current) clearInterval(timerRef.current);
             mediaRecorder.stop();
+            if (recognitionRef.current) {
+              try { recognitionRef.current.stop(); } catch { /* ignore */ }
+            }
           }
           return next;
         });
@@ -110,7 +210,20 @@ const VoiceCapture = () => {
     setElapsed(0);
     setIsPlaying(false);
     setContext("");
+    setTranscript("");
+    setTranscriptFailed(false);
+    setExtracted(null);
+    setIsTranscribing(false);
   }, [audioUrl]);
+
+  const handleContinueToForm = useCallback(() => {
+    // Re-extract with any edited transcript + context
+    const combinedText = transcript || context;
+    if (combinedText.trim()) {
+      setExtracted(extractFromTranscript(combinedText));
+    }
+    setPhase("form");
+  }, [transcript, context]);
 
   const remaining = MAX_SECONDS - elapsed;
   const isWarning = elapsed >= WARN_SECONDS && elapsed < MAX_SECONDS;
@@ -162,7 +275,6 @@ const VoiceCapture = () => {
               </p>
             </div>
 
-            {/* Guide text — idle only */}
             {phase === "idle" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -181,7 +293,21 @@ const VoiceCapture = () => {
               </motion.div>
             )}
 
-            {/* Timer — recording only */}
+            {/* Live transcript during recording */}
+            {phase === "recording" && transcript && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="w-full bg-card border border-border rounded-xl p-3 mb-4"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Loader2 size={12} className="animate-spin text-primary" />
+                  <p className="text-xs font-bold text-muted-foreground">Live transcript</p>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">{transcript}</p>
+              </motion.div>
+            )}
+
             <AnimatePresence>
               {phase === "recording" && (
                 <motion.div
@@ -203,7 +329,6 @@ const VoiceCapture = () => {
               )}
             </AnimatePresence>
 
-            {/* Record / Stop button */}
             <div className="relative flex items-center justify-center mb-6">
               <AnimatePresence>
                 {phase === "recording" && (
@@ -273,7 +398,6 @@ const VoiceCapture = () => {
               />
             )}
 
-            {/* Playback */}
             <div className="flex items-center justify-center gap-4 mb-6 p-5 bg-card rounded-xl border border-border">
               <motion.button
                 whileTap={{ scale: 0.9 }}
@@ -303,36 +427,47 @@ const VoiceCapture = () => {
               </motion.button>
             </div>
 
-            {/* Transcript placeholder */}
+            {/* Transcript */}
             <div className="mb-4">
               <label className="text-sm font-bold text-foreground mb-1.5 block">
                 What happened?
               </label>
-              <div className="bg-card border border-border rounded-xl p-4 mb-1">
-                <p className="text-xs text-muted-foreground italic">
-                  Transcript coming soon — for now, jot down the key points below! ✍️
-                </p>
-              </div>
+              {transcript ? (
+                <Textarea
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  className="bg-card min-h-[80px] text-sm"
+                  maxLength={1000}
+                />
+              ) : (
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground">
+                    {transcriptFailed
+                      ? "Couldn't catch that. No worries, just fill it in below! 🤗"
+                      : "No transcript available — add your notes below! ✍️"}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Context note */}
+            {/* Extra context */}
             <div className="mb-5">
               <label className="text-sm font-bold text-foreground mb-1.5 block">
-                Quick notes (optional)
+                Extra notes (optional)
               </label>
               <Textarea
-                placeholder="e.g. Met at the conference, wants to collaborate..."
+                placeholder="Anything else to add..."
                 value={context}
                 maxLength={500}
                 onChange={(e) => setContext(e.target.value)}
-                className="bg-card min-h-[80px]"
+                className="bg-card min-h-[60px]"
               />
             </div>
 
             <Button
               size="lg"
               className="w-full font-bold text-base gap-2"
-              onClick={() => setPhase("form")}
+              onClick={handleContinueToForm}
             >
               Continue to Form <ArrowRight size={18} />
             </Button>
@@ -357,22 +492,21 @@ const VoiceCapture = () => {
           >
             <LeadForm
               audioUrl={audioUrl}
+              transcript={transcript}
               context={context}
+              extracted={extracted}
               onBack={() => setPhase("review")}
               onSave={(data) => {
-                const today = new Date();
-                const dueDate = new Date(today);
-                dueDate.setDate(dueDate.getDate() + 3);
                 addLead({
                   name: data.name,
                   company: data.company,
                   category: data.category,
-                  notes: data.context,
-                  dueDate,
-                  createdAt: today,
+                  notes: data.notes,
+                  dueDate: data.dueDate,
+                  createdAt: new Date(),
                   audioUrl: audioUrl || undefined,
                 });
-                toast.success("Got it! We'll remind you about them. 🎉");
+                toast.success(`Got it! We've got ${data.name} on your radar. 🎉`);
                 navigate("/");
               }}
             />
