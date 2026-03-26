@@ -30,6 +30,7 @@ const App = () => (
             <Route path="/leads/:id" element={<LeadDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <NotificationScheduler />
           <BottomNav />
         </LeadsProvider>
       </BrowserRouter>
