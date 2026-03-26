@@ -96,7 +96,10 @@ const HomePage = () => {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-[28px] font-bold text-foreground tracking-tight leading-tight">
-              Follow Through
+              {(() => {
+                const name = localStorage.getItem("userName");
+                return name ? `Hi ${name}` : "Follow Through";
+              })()}
             </h1>
             <p className="text-muted-foreground mt-1 text-[14px]">
               {followUps.length > 0
