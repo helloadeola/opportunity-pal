@@ -8,6 +8,7 @@ import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import AppTour from "@/components/AppTour";
 import {
   Select,
   SelectContent,
@@ -365,6 +366,7 @@ const HomePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <AppTour />
     </div>
   );
 };
