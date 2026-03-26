@@ -15,7 +15,7 @@ const HomePage = () => {
 
   const followUps = leads
     .filter((l) => {
-      if (l.completed) return false;
+      if (l.completed || l.archived) return false;
       const status = getLeadStatus(l);
       if (status === "overdue" || status === "due-today") return true;
       // upcoming but within 3 days
