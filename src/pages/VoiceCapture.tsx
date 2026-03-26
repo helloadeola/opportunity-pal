@@ -1,28 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Play, Pause, RotateCcw, X } from "lucide-react";
+import { Mic, Square, Play, Pause, RotateCcw, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useLeads } from "@/context/LeadsContext";
+import LeadForm from "@/components/voice/LeadForm";
 
-const categories = [
-  "Opportunity",
-  "Warm Lead",
-  "Speaking Engagement",
-  "Partnership",
-  "Collaboration",
-  "Other",
-];
+const MAX_SECONDS = 60;
+const WARN_SECONDS = 50;
 
 type Phase = "idle" | "recording" | "review" | "form";
 
@@ -41,17 +28,12 @@ const VoiceCapture = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [context, setContext] = useState("");
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [category, setCategory] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; category?: string }>({});
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -61,6 +43,11 @@ const VoiceCapture = () => {
       }
     };
   }, [audioUrl]);
+
+  const stopRecording = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    mediaRecorderRef.current?.stop();
+  }, []);
 
   const startRecording = useCallback(async () => {
     try {
@@ -84,15 +71,19 @@ const VoiceCapture = () => {
       mediaRecorder.start();
       setElapsed(0);
       setPhase("recording");
-      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+      timerRef.current = setInterval(() => {
+        setElapsed((s) => {
+          const next = s + 1;
+          if (next >= MAX_SECONDS) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            mediaRecorder.stop();
+          }
+          return next;
+        });
+      }, 1000);
     } catch {
       toast.error("Couldn't access your microphone. Check your browser permissions! 🎙️");
     }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    mediaRecorderRef.current?.stop();
   }, []);
 
   const togglePlayback = useCallback(() => {
@@ -119,50 +110,30 @@ const VoiceCapture = () => {
     setElapsed(0);
     setIsPlaying(false);
     setContext("");
-    setName("");
-    setCompany("");
-    setCategory("");
-    setErrors({});
   }, [audioUrl]);
 
-  const handleSaveLead = () => {
-    const newErrors: { name?: string; category?: string } = {};
-    if (!name.trim()) newErrors.name = "Who is this about? Give them a name! 😊";
-    if (!category) newErrors.category = "Pick a category so we can organize! ✨";
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+  const remaining = MAX_SECONDS - elapsed;
+  const isWarning = elapsed >= WARN_SECONDS && elapsed < MAX_SECONDS;
+  const isMaxed = elapsed >= MAX_SECONDS;
 
-    const today = new Date();
-    const dueDate = new Date(today);
-    dueDate.setDate(dueDate.getDate() + 3);
+  const timerColor = isMaxed
+    ? "text-destructive"
+    : isWarning
+    ? "text-yellow-500"
+    : "text-foreground";
 
-    addLead({
-      name: name.trim().slice(0, 100),
-      company: company.trim().slice(0, 100),
-      category,
-      notes: context.trim().slice(0, 500),
-      dueDate,
-      createdAt: today,
-      audioUrl: audioUrl || undefined,
-    });
-
-    toast.success("Got it! We'll remind you about them. 🎉");
-    navigate("/");
-  };
-
-  // Friendly timer encouragement
-  const timerMessage =
-    elapsed < 10
-      ? "You're doing great, keep going..."
-      : elapsed < 30
-      ? "Nice! Take your time."
-      : elapsed < 60
-      ? "Awesome detail! 💪"
-      : "Wow, thorough! Wrap up when ready.";
+  const timerMessage = isMaxed
+    ? "Time's up! That's perfect. 🎯"
+    : isWarning
+    ? "Almost there, wrap it up! ⏳"
+    : elapsed < 10
+    ? "You're doing great, keep going..."
+    : elapsed < 30
+    ? "Nice! Take your time."
+    : "Awesome detail! 💪";
 
   return (
     <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto flex flex-col items-center">
-      {/* Close button */}
       <div className="w-full flex justify-end -mt-1 mb-2">
         <button
           onClick={() => navigate(-1)}
@@ -172,8 +143,8 @@ const VoiceCapture = () => {
         </button>
       </div>
 
-      {/* IDLE & RECORDING phases */}
       <AnimatePresence mode="wait">
+        {/* IDLE & RECORDING */}
         {(phase === "idle" || phase === "recording") && (
           <motion.div
             key="record-phase"
@@ -182,16 +153,35 @@ const VoiceCapture = () => {
             exit={{ opacity: 0 }}
             className="flex flex-col items-center w-full"
           >
-            <div className="text-center mb-10 mt-4">
+            <div className="text-center mb-6 mt-2">
               <h1 className="text-2xl font-extrabold text-foreground">
                 Add a Voice Note 🎙️
               </h1>
-              <p className="text-muted-foreground mt-2 font-medium">
+              <p className="text-muted-foreground mt-1 font-medium text-sm">
                 Just talk. We'll remember.
               </p>
             </div>
 
-            {/* Timer */}
+            {/* Guide text — idle only */}
+            {phase === "idle" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full bg-card border border-border rounded-xl p-4 mb-8 text-center"
+              >
+                <p className="text-sm font-bold text-foreground mb-2">
+                  You've got 60 seconds. Make it count! 🚀
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                  Include: Who you met, what they do, why they matter, and when to follow up.
+                </p>
+                <p className="text-xs text-muted-foreground/70 italic">
+                  Example: "Met Sarah from TechCrunch about sponsorship. Wants to chat next week."
+                </p>
+              </motion.div>
+            )}
+
+            {/* Timer — recording only */}
             <AnimatePresence>
               {phase === "recording" && (
                 <motion.div
@@ -200,10 +190,13 @@ const VoiceCapture = () => {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="text-center mb-6"
                 >
-                  <p className="text-4xl font-extrabold text-foreground tracking-wider font-mono">
+                  <p className={`text-4xl font-extrabold tracking-wider font-mono ${timerColor}`}>
                     {formatTime(elapsed)}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2 font-medium">
+                  <p className="text-sm text-muted-foreground mt-1 font-medium">
+                    {formatTime(remaining)} remaining
+                  </p>
+                  <p className={`text-xs mt-2 font-medium ${isMaxed ? "text-destructive" : isWarning ? "text-yellow-500" : "text-muted-foreground"}`}>
                     {timerMessage}
                   </p>
                 </motion.div>
@@ -211,7 +204,7 @@ const VoiceCapture = () => {
             </AnimatePresence>
 
             {/* Record / Stop button */}
-            <div className="relative flex items-center justify-center mb-8">
+            <div className="relative flex items-center justify-center mb-6">
               <AnimatePresence>
                 {phase === "recording" && (
                   <>
@@ -247,15 +240,13 @@ const VoiceCapture = () => {
               </motion.button>
             </div>
 
-            <p className="text-muted-foreground font-medium text-sm">
-              {phase === "idle"
-                ? "Tap the mic to start recording"
-                : "🔴 Recording... Tap to stop"}
+            <p className="text-muted-foreground font-bold text-sm">
+              {phase === "idle" ? "Tap to Start Recording" : "🔴 Recording... Tap to Stop"}
             </p>
           </motion.div>
         )}
 
-        {/* REVIEW phase */}
+        {/* REVIEW */}
         {phase === "review" && (
           <motion.div
             key="review-phase"
@@ -264,16 +255,15 @@ const VoiceCapture = () => {
             exit={{ opacity: 0 }}
             className="w-full"
           >
-            <div className="text-center mb-6 mt-4">
+            <div className="text-center mb-6 mt-2">
               <h1 className="text-2xl font-extrabold text-foreground">
-                Nice! Here's your note 🎧
+                {isMaxed ? "Time's up! That's perfect. 🎯" : "Nice capture! 🎧"}
               </h1>
               <p className="text-muted-foreground mt-1 font-medium text-sm">
                 {formatTime(elapsed)} recorded
               </p>
             </div>
 
-            {/* Audio element */}
             {audioUrl && (
               <audio
                 ref={audioRef}
@@ -283,8 +273,8 @@ const VoiceCapture = () => {
               />
             )}
 
-            {/* Playback controls */}
-            <div className="flex items-center justify-center gap-4 mb-8 p-5 bg-card rounded-xl border border-border">
+            {/* Playback */}
+            <div className="flex items-center justify-center gap-4 mb-6 p-5 bg-card rounded-xl border border-border">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={restartPlayback}
@@ -307,15 +297,28 @@ const VoiceCapture = () => {
                 whileTap={{ scale: 0.9 }}
                 onClick={resetAll}
                 className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                title="Re-record"
               >
                 <Mic size={18} />
               </motion.button>
             </div>
 
-            {/* Context note */}
+            {/* Transcript placeholder */}
             <div className="mb-4">
               <label className="text-sm font-bold text-foreground mb-1.5 block">
-                What's this about? (optional)
+                What happened?
+              </label>
+              <div className="bg-card border border-border rounded-xl p-4 mb-1">
+                <p className="text-xs text-muted-foreground italic">
+                  Transcript coming soon — for now, jot down the key points below! ✍️
+                </p>
+              </div>
+            </div>
+
+            {/* Context note */}
+            <div className="mb-5">
+              <label className="text-sm font-bold text-foreground mb-1.5 block">
+                Quick notes (optional)
               </label>
               <Textarea
                 placeholder="e.g. Met at the conference, wants to collaborate..."
@@ -328,22 +331,22 @@ const VoiceCapture = () => {
 
             <Button
               size="lg"
-              className="w-full font-bold text-base"
+              className="w-full font-bold text-base gap-2"
               onClick={() => setPhase("form")}
             >
-              Save as Lead 🚀
+              Continue to Form <ArrowRight size={18} />
             </Button>
 
             <button
               onClick={resetAll}
               className="w-full text-center mt-3 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
             >
-              Record again
+              🔄 Re-record
             </button>
           </motion.div>
         )}
 
-        {/* FORM phase */}
+        {/* FORM */}
         {phase === "form" && (
           <motion.div
             key="form-phase"
@@ -352,101 +355,27 @@ const VoiceCapture = () => {
             exit={{ opacity: 0 }}
             className="w-full"
           >
-            <div className="mb-6 mt-4">
-              <h1 className="text-2xl font-extrabold text-foreground">
-                Almost there! 🙌
-              </h1>
-              <p className="text-muted-foreground mt-1 font-medium text-sm">
-                Just a few quick details about this lead.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-sm font-bold text-foreground mb-1.5 block">
-                  Name <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  placeholder="Who is this about?"
-                  value={name}
-                  maxLength={100}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
-                  }}
-                  className={`bg-card ${errors.name ? "border-destructive" : ""}`}
-                />
-                <AnimatePresence>
-                  {errors.name && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="text-sm text-destructive mt-1.5 font-medium"
-                    >
-                      {errors.name}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-foreground mb-1.5 block">Company</label>
-                <Input
-                  placeholder="Where are they from?"
-                  value={company}
-                  maxLength={100}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="bg-card"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-foreground mb-1.5 block">
-                  Category <span className="text-destructive">*</span>
-                </label>
-                <Select
-                  value={category}
-                  onValueChange={(v) => {
-                    setCategory(v);
-                    if (errors.category) setErrors((p) => ({ ...p, category: undefined }));
-                  }}
-                >
-                  <SelectTrigger className={`bg-card ${errors.category ? "border-destructive" : ""}`}>
-                    <SelectValue placeholder="What kind of lead?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <AnimatePresence>
-                  {errors.category && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="text-sm text-destructive mt-1.5 font-medium"
-                    >
-                      {errors.category}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <Button size="lg" className="mt-2 font-bold text-base" onClick={handleSaveLead}>
-                Save Lead 🚀
-              </Button>
-              <button
-                onClick={() => setPhase("review")}
-                className="text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
-              >
-                ← Back to recording
-              </button>
-            </div>
+            <LeadForm
+              audioUrl={audioUrl}
+              context={context}
+              onBack={() => setPhase("review")}
+              onSave={(data) => {
+                const today = new Date();
+                const dueDate = new Date(today);
+                dueDate.setDate(dueDate.getDate() + 3);
+                addLead({
+                  name: data.name,
+                  company: data.company,
+                  category: data.category,
+                  notes: data.context,
+                  dueDate,
+                  createdAt: today,
+                  audioUrl: audioUrl || undefined,
+                });
+                toast.success("Got it! We'll remind you about them. 🎉");
+                navigate("/");
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
