@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mic, PenLine } from "lucide-react";
-import { sampleLeads } from "@/data/sampleLeads";
+import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const urgentLeads = sampleLeads
-    .filter((l) => l.status === "overdue" || l.status === "due-today")
+  const { leads } = useLeads();
+  const urgentLeads = leads
+    .filter((l) => l.status === "overdue" || l.status === "due-today" || l.status === "upcoming")
     .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 
   return (
@@ -30,9 +31,15 @@ const HomePage = () => {
           Today's Follow-Ups
         </h2>
         <div className="flex flex-col gap-3">
-          {urgentLeads.map((lead, i) => (
-            <LeadCard key={lead.id} lead={lead} index={i} />
-          ))}
+          {urgentLeads.length === 0 ? (
+            <p className="text-muted-foreground text-sm py-4 text-center">
+              All clear! No follow-ups right now 🎉
+            </p>
+          ) : (
+            urgentLeads.map((lead, i) => (
+              <LeadCard key={lead.id} lead={lead} index={i} />
+            ))
+          )}
         </div>
       </section>
 

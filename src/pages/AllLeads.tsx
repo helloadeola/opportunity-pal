@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { sampleLeads } from "@/data/sampleLeads";
+import { useLeads } from "@/context/LeadsContext";
 import LeadCard from "@/components/LeadCard";
 
 const AllLeads = () => {
+  const { leads } = useLeads();
+
   return (
     <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto">
       <motion.div
@@ -13,12 +15,12 @@ const AllLeads = () => {
           All Leads 📋
         </h1>
         <p className="text-muted-foreground font-medium mb-6">
-          {sampleLeads.length} people waiting to hear from you.
+          {leads.length} {leads.length === 1 ? "person" : "people"} waiting to hear from you.
         </p>
       </motion.div>
 
       <div className="flex flex-col gap-3">
-        {sampleLeads.map((lead, i) => (
+        {leads.map((lead, i) => (
           <LeadCard key={lead.id} lead={lead} index={i} />
         ))}
       </div>

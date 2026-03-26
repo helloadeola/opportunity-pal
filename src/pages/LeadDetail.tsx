@@ -2,14 +2,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { sampleLeads, getStatusLabel } from "@/data/sampleLeads";
+import { getStatusLabel } from "@/data/sampleLeads";
+import { useLeads } from "@/context/LeadsContext";
 import StatusBadge from "@/components/StatusBadge";
 import { toast } from "sonner";
 
 const LeadDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const lead = sampleLeads.find((l) => l.id === id);
+  const { leads } = useLeads();
+  const lead = leads.find((l) => l.id === id);
 
   if (!lead) {
     return (
@@ -54,10 +56,12 @@ const LeadDetail = () => {
             <span className="text-sm font-bold text-muted-foreground">Category</span>
             <span className="text-sm font-bold text-foreground">{lead.category}</span>
           </div>
-          <div className="p-4 bg-card rounded-lg border border-border">
-            <span className="text-sm font-bold text-muted-foreground block mb-2">Notes</span>
-            <p className="text-sm text-foreground">{lead.notes}</p>
-          </div>
+          {lead.notes && (
+            <div className="p-4 bg-card rounded-lg border border-border">
+              <span className="text-sm font-bold text-muted-foreground block mb-2">Notes</span>
+              <p className="text-sm text-foreground">{lead.notes}</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
