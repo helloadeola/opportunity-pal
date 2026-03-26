@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLeads } from "@/context/LeadsContext";
+import FollowUpPicker from "@/components/voice/FollowUpPicker";
 
 const categories = [
   "Opportunity",
@@ -33,6 +34,10 @@ const QuickNote = () => {
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<{ name?: string; category?: string }>({});
 
+  const defaultDue = new Date();
+  defaultDue.setDate(defaultDue.getDate() + 3);
+  const [dueDate, setDueDate] = useState<Date>(defaultDue);
+
   const validate = () => {
     const newErrors: { name?: string; category?: string } = {};
     if (!name.trim()) newErrors.name = "Hey, let's give this person a name! 😊";
@@ -44,17 +49,13 @@ const QuickNote = () => {
   const handleSave = () => {
     if (!validate()) return;
 
-    const today = new Date();
-    const dueDate = new Date(today);
-    dueDate.setDate(dueDate.getDate() + 3);
-
     addLead({
       name: name.trim().slice(0, 100),
       company: company.trim().slice(0, 100),
       category,
       notes: notes.trim().slice(0, 500),
       dueDate,
-      createdAt: today,
+      createdAt: new Date(),
     });
 
     toast.success(`${name.trim()} added! You won't forget. 🎉`);
@@ -174,6 +175,8 @@ const QuickNote = () => {
             className="bg-card min-h-[100px]"
           />
         </div>
+
+        <FollowUpPicker value={dueDate} onChange={setDueDate} />
 
         <Button onClick={handleSave} size="lg" className="mt-2 font-bold text-base">
           Save Lead 🚀

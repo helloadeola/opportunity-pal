@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -15,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import FollowUpPicker from "@/components/voice/FollowUpPicker";
 import type { ExtractedData } from "@/lib/transcriptExtractor";
 
 const categories = [
@@ -50,10 +46,9 @@ const LeadForm = ({ transcript, context, extracted, onBack, onSave }: LeadFormPr
   const [category, setCategory] = useState("Other");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState<Date>(defaultDue);
-  const [dueDateLabel, setDueDateLabel] = useState("Default: 3 days from now");
+  const [dueDateLabel, setDueDateLabel] = useState("");
   const [errors, setErrors] = useState<{ name?: string; category?: string }>({});
 
-  // Pre-fill from extracted data
   useEffect(() => {
     if (extracted) {
       if (extracted.name) setName(extracted.name);
@@ -62,7 +57,6 @@ const LeadForm = ({ transcript, context, extracted, onBack, onSave }: LeadFormPr
       if (extracted.dueDate) setDueDate(extracted.dueDate);
       if (extracted.dueDateLabel) setDueDateLabel(extracted.dueDateLabel);
     }
-    // Combine transcript + context for notes
     const combined = [transcript, context].filter(Boolean).join("\n\n").trim();
     if (combined) setNotes(combined);
   }, [extracted, transcript, context]);
@@ -184,7 +178,6 @@ const LeadForm = ({ transcript, context, extracted, onBack, onSave }: LeadFormPr
           </AnimatePresence>
         </div>
 
-        {/* Notes / transcript */}
         <div>
           <label className="text-sm font-bold text-foreground mb-1.5 block">Notes</label>
           <Textarea
@@ -199,44 +192,14 @@ const LeadForm = ({ transcript, context, extracted, onBack, onSave }: LeadFormPr
           </p>
         </div>
 
-        {/* Follow-up date */}
-        <div>
-          <label className="text-sm font-bold text-foreground mb-1.5 block">
-            Follow up by
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal bg-card",
-                  !dueDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(dueDate, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dueDate}
-                onSelect={(d) => {
-                  if (d) {
-                    setDueDate(d);
-                    setDueDateLabel("Custom date");
-                  }
-                }}
-                disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
-          <p className="text-xs text-muted-foreground mt-1">
-            {dueDateLabel}
-          </p>
-        </div>
+        <FollowUpPicker
+          value={dueDate}
+          onChange={(d) => {
+            setDueDate(d);
+            setDueDateLabel("");
+          }}
+          hintLabel={dueDateLabel}
+        />
 
         <Button size="lg" className="mt-2 font-bold text-base" onClick={handleSave}>
           Save Lead 🚀
