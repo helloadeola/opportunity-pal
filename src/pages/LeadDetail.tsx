@@ -50,9 +50,9 @@ const LeadDetail = () => {
 
   const daysDiff = getDaysDiff(lead);
   const followUpLabel = daysDiff < 0
-    ? `⏳ Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? "s" : ""}`
-    : daysDiff === 0 ? "⏰ Due today"
-    : `📆 In ${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
+    ? `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? "s" : ""}`
+    : daysDiff === 0 ? "Due today"
+    : `In ${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
   const followUpColor = daysDiff < 0 ? "text-destructive" : daysDiff === 0 ? "text-warning" : "text-muted-foreground";
 
   const togglePlayback = () => {
@@ -65,7 +65,7 @@ const LeadDetail = () => {
   const saveNotes = () => {
     updateLead(lead.id, { notes: notesValue.trim().slice(0, 1000) });
     setEditingNotes(false);
-    toast.success("Notes updated ✍️");
+    toast.success("Notes updated.");
   };
 
   const handleSnooze = (days: number) => {
@@ -91,7 +91,7 @@ const LeadDetail = () => {
     });
     setActiveSheet(null);
     setOutcomeNote("");
-    toast.success("🎉 You did it! That's amazing.");
+    toast.success("Marked as completed. Great work!");
     navigate("/");
   };
 
@@ -108,25 +108,25 @@ const LeadDetail = () => {
   const handleReschedule = (days: number) => {
     updateLead(lead.id, { dueDate: daysFromNow(days) });
     setActiveSheet(null);
-    toast.success(`Next check-in in ${days} day${days > 1 ? "s" : ""}. 💪`);
+    toast.success(`Next check-in in ${days} day${days > 1 ? "s" : ""}.`);
   };
 
   const handleArchive = () => {
     updateLead(lead.id, { archived: true });
-    toast.success("Archived. 📦");
+    toast.success("Archived.");
     navigate("/");
   };
 
   const handleUnarchive = () => {
     updateLead(lead.id, { archived: false });
-    toast.success("Back in action. 🚀");
+    toast.success("Back in action.");
   };
 
   const handleReactivate = () => {
     const due = new Date();
     due.setDate(due.getDate() + 3);
     updateLead(lead.id, { completed: false, dateCompleted: undefined, dueDate: due });
-    toast.success("Reactivated! Back on your radar. 🚀");
+    toast.success("Reactivated. Back on your radar.");
   };
 
   return (
@@ -152,7 +152,7 @@ const LeadDetail = () => {
             <h1 className="text-[22px] font-bold text-foreground truncate leading-tight">{lead.name}</h1>
             {lead.company && (
               <p className="text-muted-foreground text-[13px] truncate flex items-center gap-1 mt-0.5">
-                💼 {lead.company}
+                {lead.company}
               </p>
             )}
           </div>
@@ -166,7 +166,7 @@ const LeadDetail = () => {
             className="mt-4 p-3 rounded-lg bg-success/8 border border-success/20 flex items-center gap-2"
           >
             <CheckCircle2 size={16} className="text-success" />
-            <span className="text-[13px] font-semibold text-success">✅ Completed</span>
+            <span className="text-[13px] font-semibold text-success">Completed</span>
           </motion.div>
         )}
 
@@ -177,7 +177,7 @@ const LeadDetail = () => {
             className="mt-4 p-3 rounded-lg bg-secondary border border-border flex items-center gap-2"
           >
             <Archive size={16} className="text-muted-foreground" />
-            <span className="text-[13px] font-semibold text-muted-foreground">📦 Archived</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">Archived</span>
           </motion.div>
         )}
 
@@ -194,21 +194,21 @@ const LeadDetail = () => {
         {/* Context section */}
         <div className="mt-6 mb-6">
           <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
-            {lead.completed ? "📅 Timeline" : "Context"}
+            {lead.completed ? "Timeline" : "Context"}
           </h2>
           <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden divide-y divide-border">
-            <ContextRow emoji="📅" label="When you met them" value={format(lead.createdAt, "MMM d, yyyy")} />
-            <ContextRow emoji="📞" label="Last contact" value={lead.lastContactDate ? format(lead.lastContactDate, "MMM d, yyyy") : "Not yet"} />
-            <ContextRow emoji="🎯" label="Category" value={lead.category} />
+            <ContextRow label="When you met them" value={format(lead.createdAt, "MMM d, yyyy")} />
+            <ContextRow label="Last contact" value={lead.lastContactDate ? format(lead.lastContactDate, "MMM d, yyyy") : "Not yet"} />
+            <ContextRow label="Category" value={lead.category} />
 
             {lead.completed && lead.dateCompleted && (
-              <ContextRow emoji="✅" label="Completed" value={format(lead.dateCompleted, "MMM d, yyyy")} />
+              <ContextRow label="Completed" value={format(lead.dateCompleted, "MMM d, yyyy")} />
             )}
 
             {!lead.completed && (
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
-                  ⏰ Follow-up by
+                <span className="text-[13px] text-muted-foreground">
+                  Follow-up by
                 </span>
                 <div className="text-right">
                   <span className="text-[13px] font-medium text-foreground block">
@@ -224,8 +224,8 @@ const LeadDetail = () => {
         {/* Notes */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-              📝 Notes & Context
+            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+              Notes & Context
             </h2>
             {!editingNotes && (
               <button onClick={startEditNotes} className="text-[12px] font-medium text-primary hover:text-primary/80 transition-colors duration-200">
@@ -237,7 +237,7 @@ const LeadDetail = () => {
             <div className="bg-card rounded-xl border border-border shadow-card p-4">
               <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} maxLength={1000} className="bg-background min-h-[100px] mb-3 text-[14px]" placeholder="Add your notes..." />
               <div className="flex gap-2">
-                <Button size="sm" onClick={saveNotes} className="font-semibold text-[13px]">Save ✍️</Button>
+                <Button size="sm" onClick={saveNotes} className="font-semibold text-[13px]">Save</Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditingNotes(false)} className="text-[13px]">Cancel</Button>
               </div>
             </div>
@@ -255,8 +255,8 @@ const LeadDetail = () => {
         {/* Voice note */}
         {lead.audioUrl && (
           <div className="mb-6">
-            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1">
-              🎤 Voice Note
+            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
+              Voice Note
             </h2>
             <div className="bg-card rounded-xl border border-border shadow-card p-4">
               <audio ref={audioRef} src={lead.audioUrl} onEnded={() => setIsPlaying(false)} className="hidden" />
@@ -278,17 +278,17 @@ const LeadDetail = () => {
           <div className="space-y-2.5 mb-4">
             <div className="grid grid-cols-2 gap-2.5">
               <Button size="lg" className="font-semibold text-[14px]" onClick={() => setActiveSheet("reached-out")}>
-                📞 Reached Out
+                Reached Out
               </Button>
               <Button size="lg" variant="secondary" className="font-semibold text-[14px]" onClick={() => setActiveSheet("snooze")}>
-                ⏸️ Snooze
+                Snooze
               </Button>
             </div>
             <button
               onClick={handleArchive}
               className="w-full py-2.5 text-center text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
             >
-              📦 Archive
+              Archive
             </button>
           </div>
         )}
@@ -303,7 +303,7 @@ const LeadDetail = () => {
               onClick={handleArchive}
               className="w-full py-2.5 text-center text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
             >
-              📦 Archive
+              Archive
             </button>
           </div>
         )}
@@ -340,9 +340,9 @@ const LeadDetail = () => {
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-[17px] font-bold text-foreground">
                   {activeSheet === "reached-out" && "What's the update?"}
-                  {activeSheet === "snooze" && "⏸️ Snooze until..."}
-                  {activeSheet === "reschedule" && "📅 Next check-in"}
-                  {activeSheet === "completing" && "🎉 You've Got This"}
+                  {activeSheet === "snooze" && "Snooze until..."}
+                  {activeSheet === "reschedule" && "Next check-in"}
+                  {activeSheet === "completing" && "Mark as Completed"}
                 </h3>
                 <button
                   onClick={() => { setActiveSheet(null); setCustomDate(undefined); setOutcomeNote(""); }}
@@ -356,19 +356,19 @@ const LeadDetail = () => {
               {activeSheet === "reached-out" && (
                 <div className="flex flex-col gap-2">
                   <SheetOption
-                    emoji="📅"
+                    icon={<CalendarClock size={18} className="text-primary" />}
                     title="Schedule next follow-up"
                     subtitle="Pick a new follow-up date"
                     onClick={handleReachedOutSnooze}
                   />
                   <SheetOption
-                    emoji="✅"
+                    icon={<CheckCircle2 size={18} className="text-success" />}
                     title="We're good! Mark as completed"
                     subtitle="Celebrate your win"
                     onClick={() => setActiveSheet("completing")}
                   />
                   <SheetOption
-                    emoji="→"
+                    icon={<ArrowRight size={18} className="text-muted-foreground" />}
                     title="Keep following up"
                     subtitle="Set a new follow-up date"
                     onClick={handleKeepFollowing}
@@ -401,13 +401,13 @@ const LeadDetail = () => {
                     ))}
                   </div>
                   <Button size="lg" className="font-semibold text-[14px]" onClick={handleMarkCompleted}>
-                    Mark as Completed 🎉
+                    Mark as Completed
                   </Button>
                   <button
                     onClick={() => setActiveSheet("reached-out")}
                     className="text-center text-[13px] text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
                   >
-                    ← Back
+                    Back
                   </button>
                 </div>
               )}
@@ -423,7 +423,7 @@ const LeadDetail = () => {
                   ].map((opt) => (
                     <SheetOption
                       key={opt.days}
-                      emoji="📆"
+                      icon={<CalendarClock size={18} className="text-primary" />}
                       title={activeSheet === "snooze" ? `Snooze ${opt.label}` : `In ${opt.label}`}
                       subtitle={opt.sub}
                       onClick={() => activeSheet === "snooze" ? handleSnooze(opt.days) : handleReschedule(opt.days)}
@@ -456,7 +456,7 @@ const LeadDetail = () => {
                         onClick={activeSheet === "snooze" ? handleSnoozeCustom : () => {
                           updateLead(lead.id, { dueDate: customDate });
                           setActiveSheet(null); setCustomDate(undefined);
-                          toast.success(`Next check-in on ${format(customDate, "MMM d")}. 💪`);
+                          toast.success(`Next check-in on ${format(customDate, "MMM d")}.`);
                         }}
                       >
                         Confirm — {format(customDate, "MMM d")}
@@ -473,16 +473,16 @@ const LeadDetail = () => {
   );
 };
 
-const ContextRow = ({ emoji, label, value }: { emoji: string; label: string; value: string }) => (
+const ContextRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between px-4 py-3">
-    <span className="text-[13px] text-muted-foreground flex items-center gap-2">{emoji} {label}</span>
+    <span className="text-[13px] text-muted-foreground">{label}</span>
     <span className="text-[13px] font-medium text-foreground">{value}</span>
   </div>
 );
 
-const SheetOption = ({ emoji, title, subtitle, onClick }: { emoji: string; title: string; subtitle: string; onClick: () => void }) => (
+const SheetOption = ({ icon, title, subtitle, onClick }: { icon: React.ReactNode; title: string; subtitle: string; onClick: () => void }) => (
   <button onClick={onClick} className="flex items-center gap-3 p-3.5 bg-secondary rounded-xl hover:bg-accent transition-colors duration-200 text-left">
-    <span className="text-[18px] shrink-0">{emoji}</span>
+    <span className="shrink-0">{icon}</span>
     <div>
       <p className="font-medium text-foreground text-[14px]">{title}</p>
       <p className="text-[12px] text-muted-foreground">{subtitle}</p>

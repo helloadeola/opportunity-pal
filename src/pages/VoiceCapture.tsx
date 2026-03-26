@@ -108,7 +108,6 @@ const VoiceCapture = () => {
         setAudioUrl(url);
         stream.getTracks().forEach((t) => t.stop());
 
-        // Finalize transcript
         const finalTranscript = transcriptRef.current.trim();
         setTranscript(finalTranscript);
         setIsTranscribing(false);
@@ -123,7 +122,6 @@ const VoiceCapture = () => {
         setPhase("review");
       };
 
-      // Start Speech Recognition
       const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognitionCtor) {
         const recognition = new SpeechRecognitionCtor();
@@ -147,12 +145,9 @@ const VoiceCapture = () => {
           setTranscript(transcriptRef.current);
         };
 
-        recognition.onerror = () => {
-          // Speech recognition failed — we'll handle it gracefully
-        };
+        recognition.onerror = () => {};
 
         recognition.onend = () => {
-          // Finalize what we have
           transcriptRef.current = finalText;
         };
 
@@ -182,7 +177,7 @@ const VoiceCapture = () => {
         });
       }, 1000);
     } catch {
-      toast.error("Couldn't access your microphone. Check your browser permissions! 🎙️");
+      toast.error("Couldn't access your microphone. Check your browser permissions.");
     }
   }, []);
 
@@ -217,7 +212,6 @@ const VoiceCapture = () => {
   }, [audioUrl]);
 
   const handleContinueToForm = useCallback(() => {
-    // Re-extract with any edited transcript + context
     const combinedText = transcript || context;
     if (combinedText.trim()) {
       setExtracted(extractFromTranscript(combinedText));
@@ -232,27 +226,27 @@ const VoiceCapture = () => {
   const timerColor = isMaxed
     ? "text-destructive"
     : isWarning
-    ? "text-yellow-500"
+    ? "text-warning"
     : "text-foreground";
 
   const timerMessage = isMaxed
-    ? "Time's up! That's perfect. 🎯"
+    ? "Time's up! That's perfect."
     : isWarning
-    ? "Almost there, wrap it up! ⏳"
+    ? "Almost there, wrap it up."
     : elapsed < 10
     ? "You're doing great, keep going..."
     : elapsed < 30
-    ? "Nice! Take your time."
-    : "Awesome detail! 💪";
+    ? "Nice. Take your time."
+    : "Awesome detail.";
 
   return (
-    <div className="safe-bottom px-5 py-6 max-w-[480px] mx-auto flex flex-col items-center">
+    <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto flex flex-col items-center">
       <div className="w-full flex justify-end -mt-1 mb-2">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -mr-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+          className="p-2 -mr-2 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
         >
-          <X size={22} />
+          <X size={20} />
         </button>
       </div>
 
@@ -267,10 +261,10 @@ const VoiceCapture = () => {
             className="flex flex-col items-center w-full"
           >
             <div className="text-center mb-6 mt-2">
-              <h1 className="text-2xl font-extrabold text-foreground">
-                Add a Voice Note 🎙️
+              <h1 className="text-[22px] font-bold text-foreground">
+                Add a Voice Note
               </h1>
-              <p className="text-muted-foreground mt-1 font-medium text-sm">
+              <p className="text-muted-foreground mt-1 text-[13px]">
                 Just talk. We'll remember.
               </p>
             </div>
@@ -279,15 +273,15 @@ const VoiceCapture = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full bg-card border border-border rounded-xl p-4 mb-8 text-center"
+                className="w-full bg-card border border-border rounded-xl p-4 mb-8 text-center shadow-card"
               >
-                <p className="text-sm font-bold text-foreground mb-2">
-                  You've got 60 seconds. Make it count! 🚀
+                <p className="text-[14px] font-semibold text-foreground mb-2">
+                  You've got 60 seconds. Make it count.
                 </p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
                   Include: Who you met, what they do, why they matter, and when to follow up.
                 </p>
-                <p className="text-xs text-muted-foreground/70 italic">
+                <p className="text-[12px] text-muted-foreground/70 italic">
                   Example: "Met Sarah from TechCrunch about sponsorship. Wants to chat next week."
                 </p>
               </motion.div>
@@ -298,13 +292,13 @@ const VoiceCapture = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="w-full bg-card border border-border rounded-xl p-3 mb-4"
+                className="w-full bg-card border border-border rounded-xl p-3 mb-4 shadow-card"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Loader2 size={12} className="animate-spin text-primary" />
-                  <p className="text-xs font-bold text-muted-foreground">Live transcript</p>
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Live transcript</p>
                 </div>
-                <p className="text-sm text-foreground leading-relaxed">{transcript}</p>
+                <p className="text-[14px] text-foreground leading-relaxed">{transcript}</p>
               </motion.div>
             )}
 
@@ -316,13 +310,13 @@ const VoiceCapture = () => {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="text-center mb-6"
                 >
-                  <p className={`text-4xl font-extrabold tracking-wider font-mono ${timerColor}`}>
+                  <p className={`text-4xl font-bold tracking-wider font-mono ${timerColor}`}>
                     {formatTime(elapsed)}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1 font-medium">
+                  <p className="text-[13px] text-muted-foreground mt-1">
                     {formatTime(remaining)} remaining
                   </p>
-                  <p className={`text-xs mt-2 font-medium ${isMaxed ? "text-destructive" : isWarning ? "text-yellow-500" : "text-muted-foreground"}`}>
+                  <p className={`text-[12px] mt-2 font-medium ${isMaxed ? "text-destructive" : isWarning ? "text-warning" : "text-muted-foreground"}`}>
                     {timerMessage}
                   </p>
                 </motion.div>
@@ -365,8 +359,8 @@ const VoiceCapture = () => {
               </motion.button>
             </div>
 
-            <p className="text-muted-foreground font-bold text-sm">
-              {phase === "idle" ? "Tap to Start Recording" : "🔴 Recording... Tap to Stop"}
+            <p className="text-muted-foreground font-semibold text-[13px]">
+              {phase === "idle" ? "Tap to Start Recording" : "Recording... Tap to Stop"}
             </p>
           </motion.div>
         )}
@@ -381,10 +375,10 @@ const VoiceCapture = () => {
             className="w-full"
           >
             <div className="text-center mb-6 mt-2">
-              <h1 className="text-2xl font-extrabold text-foreground">
-                {isMaxed ? "Time's up! That's perfect. 🎯" : "Nice capture! 🎧"}
+              <h1 className="text-[22px] font-bold text-foreground">
+                {isMaxed ? "Time's up! That's perfect." : "Nice capture!"}
               </h1>
-              <p className="text-muted-foreground mt-1 font-medium text-sm">
+              <p className="text-muted-foreground mt-1 text-[13px]">
                 {formatTime(elapsed)} recorded
               </p>
             </div>
@@ -398,11 +392,11 @@ const VoiceCapture = () => {
               />
             )}
 
-            <div className="flex items-center justify-center gap-4 mb-6 p-5 bg-card rounded-xl border border-border">
+            <div className="flex items-center justify-center gap-4 mb-6 p-5 bg-card rounded-xl border border-border shadow-card">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={restartPlayback}
-                className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 <RotateCcw size={18} />
               </motion.button>
@@ -420,7 +414,7 @@ const VoiceCapture = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={resetAll}
-                className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                 title="Re-record"
               >
                 <Mic size={18} />
@@ -429,22 +423,22 @@ const VoiceCapture = () => {
 
             {/* Transcript */}
             <div className="mb-4">
-              <label className="text-sm font-bold text-foreground mb-1.5 block">
+              <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 What happened?
               </label>
               {transcript ? (
                 <Textarea
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
-                  className="bg-card min-h-[80px] text-sm"
+                  className="bg-card min-h-[80px] text-[14px]"
                   maxLength={1000}
                 />
               ) : (
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground">
+                <div className="bg-card border border-border rounded-xl p-4 shadow-card">
+                  <p className="text-[12px] text-muted-foreground">
                     {transcriptFailed
-                      ? "Couldn't catch that. No worries, just fill it in below! 🤗"
-                      : "No transcript available — add your notes below! ✍️"}
+                      ? "Couldn't catch that. No worries, just fill it in below."
+                      : "No transcript available — add your notes below."}
                   </p>
                 </div>
               )}
@@ -452,7 +446,7 @@ const VoiceCapture = () => {
 
             {/* Extra context */}
             <div className="mb-5">
-              <label className="text-sm font-bold text-foreground mb-1.5 block">
+              <label className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 Extra notes (optional)
               </label>
               <Textarea
@@ -460,13 +454,13 @@ const VoiceCapture = () => {
                 value={context}
                 maxLength={500}
                 onChange={(e) => setContext(e.target.value)}
-                className="bg-card min-h-[60px]"
+                className="bg-card min-h-[60px] text-[14px]"
               />
             </div>
 
             <Button
               size="lg"
-              className="w-full font-bold text-base gap-2"
+              className="w-full font-semibold text-[14px] gap-2"
               onClick={handleContinueToForm}
             >
               Continue to Form <ArrowRight size={18} />
@@ -474,9 +468,9 @@ const VoiceCapture = () => {
 
             <button
               onClick={resetAll}
-              className="w-full text-center mt-3 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
+              className="w-full text-center mt-3 text-[13px] text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
             >
-              🔄 Re-record
+              Re-record
             </button>
           </motion.div>
         )}
@@ -506,7 +500,7 @@ const VoiceCapture = () => {
                   createdAt: new Date(),
                   audioUrl: audioUrl || undefined,
                 });
-                toast.success(`Got it! We've got ${data.name} on your radar. 🎉`);
+                toast.success(`Got it! We've got ${data.name} on your radar.`);
                 navigate("/");
               }}
             />

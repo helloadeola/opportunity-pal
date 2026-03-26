@@ -63,7 +63,7 @@ const AllLeads = () => {
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          ✅ Completed ({completedLeads.length})
+          Completed ({completedLeads.length})
         </button>
       </div>
 
@@ -76,7 +76,6 @@ const AllLeads = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
             >
-              <p className="text-[32px]">✨</p>
               <p className="text-foreground font-semibold text-[15px]">You're all caught up!</p>
               <p className="text-muted-foreground text-[13px]">
                 Add a new lead to get started.
@@ -113,7 +112,6 @@ const AllLeads = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
             >
-              <p className="text-[32px]">💪</p>
               <p className="text-foreground font-semibold text-[15px]">No wins yet.</p>
               <p className="text-muted-foreground text-[13px]">
                 Keep going — you'll get there.
