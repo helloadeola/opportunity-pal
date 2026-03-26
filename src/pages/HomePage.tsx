@@ -28,7 +28,7 @@ const timeOptions = Array.from({ length: 14 }, (_, i) => {
 
 const frequencyOptions = [
   { value: "daily", label: "Every day" },
-  { value: "3x-week", label: "3× per week (Mon, Wed, Fri)" },
+  { value: "3x-week", label: "3x per week (Mon, Wed, Fri)" },
   { value: "weekly", label: "Weekly (Monday)" },
 ] as const;
 
@@ -76,7 +76,7 @@ const HomePage = () => {
         return;
       }
       updateNotif({ enabled: true });
-      toast.success("Reminders enabled! We'll nudge you when it's time. 🔔");
+      toast.success("Reminders enabled.");
     } else {
       updateNotif({ enabled: false });
       toast.success("Reminders turned off.");
@@ -99,7 +99,7 @@ const HomePage = () => {
             <p className="text-muted-foreground mt-1 text-[14px]">
               {followUps.length > 0
                 ? `You have ${followUps.length} follow-up${followUps.length > 1 ? "s" : ""} today.`
-                : "You're on track. ✨"}
+                : "You're on track."}
             </p>
           </div>
           <button
@@ -123,7 +123,7 @@ const HomePage = () => {
           >
             <div className="p-5 bg-card rounded-xl border border-border shadow-card">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-[15px] font-semibold text-foreground">⚙️ Settings</h3>
+                <h3 className="text-[15px] font-semibold text-foreground">Settings</h3>
                 <button
                   onClick={() => { setShowSettings(false); setConfirmClear(false); }}
                   className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
@@ -140,7 +140,7 @@ const HomePage = () => {
                   ) : (
                     <BellOff size={14} className="text-muted-foreground" />
                   )}
-                  <p className="text-[13px] font-semibold text-foreground">📬 Notifications</p>
+                  <p className="text-[13px] font-semibold text-foreground">Notifications</p>
                 </div>
 
                 <div className="flex items-center justify-between mb-3 p-3 rounded-lg bg-secondary">
@@ -224,7 +224,7 @@ const HomePage = () => {
                 >
                   <Trash2 size={14} className="text-destructive" />
                   <div>
-                    <p className="text-[13px] font-medium text-destructive">🗑️ Clear all data</p>
+                    <p className="text-[13px] font-medium text-destructive">Clear all data</p>
                     <p className="text-[11px] text-muted-foreground">Reset to sample leads</p>
                   </div>
                 </button>
@@ -240,7 +240,7 @@ const HomePage = () => {
                         clearAllData();
                         setConfirmClear(false);
                         setShowSettings(false);
-                        toast.success("All cleared! Fresh start.");
+                        toast.success("All cleared. Fresh start.");
                       }}
                       className="flex-1 py-2 px-3 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-semibold"
                     >
@@ -271,7 +271,6 @@ const HomePage = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-3 py-10 bg-card rounded-xl border border-border shadow-card"
             >
-              <p className="text-[32px]">✨</p>
               <p className="text-foreground font-semibold text-[15px]">You're on track.</p>
               <p className="text-muted-foreground text-[13px]">
                 No follow-ups due right now. Great work.
@@ -296,7 +295,7 @@ const HomePage = () => {
             className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
           >
             <Mic size={22} strokeWidth={1.8} className="text-primary" />
-            <span className="font-semibold text-primary text-[13px]">🎤 Voice Note</span>
+            <span className="font-semibold text-primary text-[13px]">Voice Note</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.98 }}
@@ -304,7 +303,7 @@ const HomePage = () => {
             className="flex flex-col items-center gap-2 p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
           >
             <PenLine size={22} strokeWidth={1.8} className="text-foreground" />
-            <span className="font-semibold text-foreground text-[13px]">📝 Quick Note</span>
+            <span className="font-semibold text-foreground text-[13px]">Quick Note</span>
           </motion.button>
         </div>
       </section>

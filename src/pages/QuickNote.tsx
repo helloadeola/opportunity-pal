@@ -17,12 +17,12 @@ import { useLeads } from "@/context/LeadsContext";
 import FollowUpPicker from "@/components/voice/FollowUpPicker";
 
 const categories = [
-  { value: "Opportunity", emoji: "💡" },
-  { value: "Warm Lead", emoji: "🔥" },
-  { value: "Speaking Engagement", emoji: "🎤" },
-  { value: "Partnership", emoji: "🤝" },
-  { value: "Collaboration", emoji: "📊" },
-  { value: "Other", emoji: "🔗" },
+  "Opportunity",
+  "Warm Lead",
+  "Speaking Engagement",
+  "Partnership",
+  "Collaboration",
+  "Other",
 ];
 
 const QuickNote = () => {
@@ -71,7 +71,7 @@ const QuickNote = () => {
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
           <h1 className="text-[22px] font-bold text-foreground leading-tight">
-            📝 Quick Note
+            Quick Note
           </h1>
           <p className="text-muted-foreground text-[13px] mt-1">
             Capture it before it slips away.
@@ -146,8 +146,8 @@ const QuickNote = () => {
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.emoji} {cat.value}
+                <SelectItem key={cat} value={cat}>
+                  {cat}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -180,7 +180,7 @@ const QuickNote = () => {
         <FollowUpPicker value={dueDate} onChange={setDueDate} />
 
         <Button onClick={handleSave} size="lg" className="mt-1 font-semibold text-[14px]">
-          Save Lead →
+          Save Lead
         </Button>
       </motion.div>
     </div>

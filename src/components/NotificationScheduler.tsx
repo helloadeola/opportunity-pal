@@ -47,11 +47,11 @@ function markFired() {
 function sendNotification(count: number) {
   if (Notification.permission !== "granted") return;
 
-  const title = "Follow Through ✨";
+  const title = "Follow Through";
   const body =
     count > 0
       ? `You've got ${count} lead${count > 1 ? "s" : ""} to follow up on. Ready?`
-      : "You're all caught up! 🎉";
+      : "You're all caught up!";
 
   try {
     new Notification(title, {

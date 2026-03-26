@@ -27,10 +27,10 @@ const LeadCard = ({ lead, index = 0, showCompleted = false }: LeadCardProps) => 
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-card-foreground truncate text-[15px] leading-tight">
-          🎯 {lead.name}
+          {lead.name}
         </p>
         <p className="text-[13px] text-muted-foreground truncate mt-0.5">
-          💼 {lead.company || "No company"}
+          {lead.company || "No company"}
         </p>
         {showCompleted && lead.dateCompleted && (
           <p className="text-[12px] text-muted-foreground mt-0.5">
