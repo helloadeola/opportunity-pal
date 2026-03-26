@@ -11,6 +11,8 @@ export interface Lead {
   completed?: boolean;
   archived?: boolean;
   lastContactDate?: Date;
+  dateCompleted?: Date;
+  outcomeNote?: string;
   audioUrl?: string;
 }
 

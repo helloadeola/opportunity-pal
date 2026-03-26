@@ -1,10 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CheckCircle2 } from "lucide-react";
+import { format } from "date-fns";
 import { Lead } from "@/data/sampleLeads";
 import StatusBadge from "./StatusBadge";
 
-const LeadCard = ({ lead, index = 0 }: { lead: Lead; index?: number }) => {
+interface LeadCardProps {
+  lead: Lead;
+  index?: number;
+  showCompleted?: boolean;
+}
+
+const LeadCard = ({ lead, index = 0, showCompleted = false }: LeadCardProps) => {
   const navigate = useNavigate();
 
   return (
@@ -21,8 +28,24 @@ const LeadCard = ({ lead, index = 0 }: { lead: Lead; index?: number }) => {
       <div className="flex-1 min-w-0">
         <p className="font-bold text-card-foreground truncate">{lead.name}</p>
         <p className="text-sm text-muted-foreground truncate">{lead.company}</p>
+        {showCompleted && lead.dateCompleted && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {format(lead.dateCompleted, "MMM d, yyyy")}
+          </p>
+        )}
+        {showCompleted && lead.outcomeNote && (
+          <p className="text-xs text-muted-foreground truncate mt-0.5 italic">
+            {lead.outcomeNote}
+          </p>
+        )}
       </div>
-      <StatusBadge lead={lead} />
+      {showCompleted ? (
+        <span className="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap bg-emerald-500/15 text-emerald-600 flex items-center gap-1">
+          <CheckCircle2 size={12} /> Done
+        </span>
+      ) : (
+        <StatusBadge lead={lead} />
+      )}
       <ChevronRight size={16} className="text-muted-foreground shrink-0" />
     </motion.button>
   );
