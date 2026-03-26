@@ -231,6 +231,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="p-8"
             >
+              <WelcomeHero />
               <h1 className="text-[24px] font-bold text-foreground mb-4">
                 Follow Through App
               </h1>
