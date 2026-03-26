@@ -1,24 +1,26 @@
 
 
-## Plan: Add Animated Hero Visual to Onboarding Welcome Screen
+## Plan: Fix Mobile Responsiveness and Smooth Scrolling
 
-Add an eye-catching animated graphic above the welcome text using Framer Motion. Since the app is about leads and follow-ups, create an animated "network/connections" illustration built with motion-animated SVG circles and lines that draw themselves in, plus a pulsing central icon.
+The app already has a mobile-first layout (max-width 480px) but needs viewport meta tweaks to prevent zoom issues, smooth scrolling, and proper overflow handling on real mobile devices.
 
-### What gets built
+### Changes
 
-**Animated hero graphic** in Step 1 of `src/components/Onboarding.tsx`:
-- A central circular icon (target/crosshair motif) that scales in with a spring animation
-- 3-4 orbiting dots that fade in sequentially with staggered delays, connected by animated lines
-- Subtle gradient glow behind the central element
-- All built with inline SVG + Framer Motion (no external assets needed)
-- Uses the app's primary blue and accent colors
-- Total animation sequence: ~1.5s, smooth and premium feeling
+**1. `index.html` — Lock viewport to prevent zoom-out**
+- Update the viewport meta tag to include `maximum-scale=1, user-scalable=no` so the page fills the screen properly on all phones without zooming out.
 
-### Technical details
+**2. `src/index.css` — Add smooth scroll and overflow fixes**
+- Add `scroll-behavior: smooth` on `html`
+- Add `-webkit-overflow-scrolling: touch` on body for iOS momentum scrolling
+- Ensure `html, body` have `overflow-x: hidden` to prevent horizontal scroll
+- Add `min-height: 100dvh` using dynamic viewport height so content fills the screen on mobile browsers with collapsing address bars
 
-- **File changed**: `src/components/Onboarding.tsx` only
-- Add a new `WelcomeHero` component within the file using `motion.div`, `motion.svg`, `motion.circle`, `motion.path`
-- Animations: `pathLength` for line drawing, `scale`/`opacity` for elements appearing, `rotate` for subtle orbital motion
-- Renders above the "Follow Through App" heading
-- Responsive: sized relative to container, works on 390px mobile viewport
+**3. `src/App.css` — Remove legacy constraints**
+- Remove the `max-width: 1280px` and `padding: 2rem` on `#root` that may cause layout issues; let Tailwind classes on individual pages handle spacing.
+
+### Result
+- App fills the mobile screen edge-to-edge without zooming out
+- Smooth, native-feeling scroll with iOS momentum
+- No horizontal overflow or layout shifts
+- Works correctly with dynamic mobile browser chrome (address bar hide/show)
 
