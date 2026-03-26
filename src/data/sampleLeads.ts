@@ -9,6 +9,7 @@ export interface Lead {
   createdAt: Date;
   snoozedUntil?: Date;
   reachedOut?: boolean;
+  audioUrl?: string;
 }
 
 const today = new Date();
