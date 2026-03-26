@@ -58,7 +58,7 @@ const QuickNote = () => {
       createdAt: new Date(),
     });
 
-    toast.success(`${name.trim()} added! You won't forget. 🎉`);
+    toast.success(`Saved! We'll remind you about ${name.trim()}. 🎉`);
     navigate("/");
   };
 
