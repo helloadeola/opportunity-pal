@@ -308,7 +308,7 @@ const HomePage = () => {
           className="flex items-center justify-center gap-2 w-full p-5 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover hover:bg-accent/40 transition-all duration-200"
         >
           <PenLine size={22} strokeWidth={1.8} className="text-primary" />
-          <span className="font-semibold text-primary text-[13px]">Add Quick Note</span>
+          <span className="font-semibold text-primary text-[13px]">Add New Lead</span>
         </motion.button>
       </section>
 
