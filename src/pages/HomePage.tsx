@@ -38,6 +38,7 @@ const HomePage = () => {
   const { leads, clearAllData } = useLeads();
   const [showSettings, setShowSettings] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const { settings: notifSettings, update: updateNotif } = useNotificationSettings();
 
   const followUps = leads
