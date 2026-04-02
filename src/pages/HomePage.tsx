@@ -393,6 +393,109 @@ const HomePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {showFeedback && (
+          <motion.div
+            key="feedback-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowFeedback(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[500px] h-[80vh] bg-card rounded-xl border border-border shadow-modal flex flex-col overflow-hidden"
+            >
+              <div className="flex justify-between items-center p-5 border-b border-border">
+                <h2 className="text-[17px] font-bold text-foreground">Share Feedback</h2>
+                <button
+                  onClick={() => setShowFeedback(false)}
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <iframe
+                src="https://tally.so/r/eq2NEk?transparentBackground=1"
+                className="flex-1 w-full border-0"
+                title="Share Feedback"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {showContact && (
+          <motion.div
+            key="contact-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowContact(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[500px] bg-card rounded-xl border border-border shadow-modal p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-[20px] font-bold text-foreground">Contact</h2>
+                <button
+                  onClick={() => setShowContact(false)}
+                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground -mt-1 -mr-1"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <p className="text-[13px] text-muted-foreground mb-4">
+                Have questions or inquiries? Reach out via email.
+              </p>
+
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary mb-6">
+                <Mail size={14} className="text-primary shrink-0" />
+                <span className="text-[13px] font-medium text-foreground flex-1 break-all">
+                  helloadeniranadeola@gmail.com
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText("helloadeniranadeola@gmail.com");
+                    setEmailCopied(true);
+                    setTimeout(() => setEmailCopied(false), 2000);
+                    toast.success("Email copied!");
+                  }}
+                  className="p-1.5 rounded-md hover:bg-accent transition-colors duration-200 text-muted-foreground shrink-0"
+                >
+                  <Copy size={14} />
+                </button>
+              </div>
+
+              <Button
+                className="w-full font-semibold text-[14px]"
+                onClick={() => window.open("mailto:helloadeniranadeola@gmail.com", "_blank")}
+              >
+                <ExternalLink size={14} className="mr-2" />
+                Send Email
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AppTour />
     </div>
   );
