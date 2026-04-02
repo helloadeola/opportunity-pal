@@ -1,18 +1,24 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
-  ArrowLeft, Send, Clock, CheckCircle2, CalendarClock,
-  ArrowRight, CalendarIcon, X, Play, Pause, Archive,
+  ArrowLeft, CheckCircle2, CalendarClock,
+  ArrowRight, Play, Pause, Archive,
   ArchiveRestore, RotateCcw, Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getDaysDiff } from "@/data/sampleLeads";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getDaysDiff, type Lead } from "@/data/sampleLeads";
 import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -37,6 +43,8 @@ const LeadDetail = () => {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
   const [outcomeNote, setOutcomeNote] = useState("");
+  const [reachedOutMode, setReachedOutMode] = useState<"schedule-next" | "keep-following" | null>(null);
+  const [sheetError, setSheetError] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   if (!lead) {
@@ -68,17 +76,51 @@ const LeadDetail = () => {
     toast.success("Notes updated.");
   };
 
-  const handleSnooze = (days: number) => {
-    updateLead(lead.id, { dueDate: daysFromNow(days) });
+  const resetSheetState = () => {
     setActiveSheet(null);
-    toast.success(`Snoozed for ${days} day${days > 1 ? "s" : ""}.`);
+    setCustomDate(undefined);
+    setOutcomeNote("");
+    setReachedOutMode(null);
+    setSheetError("");
   };
 
-  const handleSnoozeCustom = () => {
-    if (!customDate) return;
-    updateLead(lead.id, { dueDate: customDate });
-    setActiveSheet(null); setCustomDate(undefined);
-    toast.success(`Snoozed until ${format(customDate, "MMM d")}.`);
+  const getSuggestedFollowUpDate = () => {
+    const today = daysFromNow(0);
+    const dueDate = new Date(lead.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    return dueDate.getTime() <= today.getTime() ? daysFromNow(1) : dueDate;
+  };
+
+  const openFollowUpPicker = (mode: "snooze" | "schedule-next" | "keep-following") => {
+    setSheetError("");
+    setOutcomeNote("");
+    setCustomDate(getSuggestedFollowUpDate());
+    setReachedOutMode(mode === "snooze" ? null : mode);
+    setActiveSheet(mode === "snooze" ? "snooze" : "reschedule");
+  };
+
+  const applyFollowUpDate = (date?: Date) => {
+    if (!date) {
+      const message = "Choose a follow-up date to continue.";
+      setSheetError(message);
+      toast.error(message);
+      return;
+    }
+
+    const nextDate = new Date(date);
+    nextDate.setHours(0, 0, 0, 0);
+
+    const updates: Partial<Lead> = { dueDate: nextDate };
+
+    if (activeSheet === "reschedule") {
+      updates.lastContactDate = new Date();
+      updates.reachedOut = true;
+    }
+
+    updateLead(lead.id, updates);
+    resetSheetState();
+    toast.success(`Lead rescheduled to ${format(nextDate, "MMMM d")}.`);
   };
 
   const handleMarkCompleted = () => {
@@ -89,26 +131,20 @@ const LeadDetail = () => {
       dateCompleted: new Date(),
       outcomeNote: outcomeNote.trim().slice(0, 200) || undefined,
     });
-    setActiveSheet(null);
-    setOutcomeNote("");
-    toast.success("Marked as completed. Great work!");
-    navigate("/");
+    resetSheetState();
+    toast.success("Lead marked as completed.");
   };
 
   const handleReachedOutSnooze = () => {
-    updateLead(lead.id, { lastContactDate: new Date(), reachedOut: true });
-    setActiveSheet("snooze");
+    openFollowUpPicker("schedule-next");
   };
 
   const handleKeepFollowing = () => {
-    updateLead(lead.id, { lastContactDate: new Date(), reachedOut: true });
-    setActiveSheet("reschedule");
+    openFollowUpPicker("keep-following");
   };
 
   const handleReschedule = (days: number) => {
-    updateLead(lead.id, { dueDate: daysFromNow(days) });
-    setActiveSheet(null);
-    toast.success(`Next check-in in ${days} day${days > 1 ? "s" : ""}.`);
+    applyFollowUpDate(daysFromNow(days));
   };
 
   const handleArchive = () => {
@@ -128,6 +164,26 @@ const LeadDetail = () => {
     updateLead(lead.id, { completed: false, dateCompleted: undefined, dueDate: due });
     toast.success("Reactivated. Back on your radar.");
   };
+
+  const modalTitle =
+    activeSheet === "reached-out"
+      ? "What happened after you reached out?"
+      : activeSheet === "snooze"
+      ? "Snooze this lead"
+      : activeSheet === "reschedule"
+      ? reachedOutMode === "keep-following"
+        ? "Keep following up"
+        : "Schedule next follow-up"
+      : "Mark as completed";
+
+  const modalDescription =
+    activeSheet === "reached-out"
+      ? "Choose the next step for this relationship."
+      : activeSheet === "snooze"
+      ? "Pick a new follow-up date without marking this lead as contacted."
+      : activeSheet === "reschedule"
+      ? "Choose the next date and we’ll keep this lead active."
+      : "Add an optional outcome note, then close this loop.";
 
   return (
     <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
@@ -277,10 +333,16 @@ const LeadDetail = () => {
         {!lead.completed && !lead.archived && (
           <div className="space-y-2.5 mb-4">
             <div className="grid grid-cols-2 gap-2.5">
-              <Button size="lg" className="font-semibold text-[14px]" onClick={() => setActiveSheet("reached-out")}>
+              <Button size="lg" className="font-semibold text-[14px]" onClick={() => {
+                setOutcomeNote("");
+                setCustomDate(undefined);
+                setReachedOutMode(null);
+                setSheetError("");
+                setActiveSheet("reached-out");
+              }}>
                 Reached Out
               </Button>
-              <Button size="lg" variant="secondary" className="font-semibold text-[14px]" onClick={() => setActiveSheet("snooze")}>
+              <Button size="lg" variant="secondary" className="font-semibold text-[14px]" onClick={() => openFollowUpPicker("snooze")}>
                 Snooze
               </Button>
             </div>
@@ -316,159 +378,162 @@ const LeadDetail = () => {
         )}
       </motion.div>
 
-      {/* Action Sheets */}
-      <AnimatePresence>
+      <Dialog open={Boolean(activeSheet)} onOpenChange={(open) => { if (!open) resetSheetState(); }}>
         {activeSheet && (
-          <motion.div
-            key="overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-end justify-center"
-            onClick={() => { setActiveSheet(null); setCustomDate(undefined); setOutcomeNote(""); }}
-          >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[480px] bg-card rounded-t-2xl border-t border-border shadow-modal p-5 pb-10"
-            >
-              <div className="w-8 h-1 rounded-full bg-border mx-auto mb-4" />
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-[17px] font-bold text-foreground">
-                  {activeSheet === "reached-out" && "What's the update?"}
-                  {activeSheet === "snooze" && "Snooze until..."}
-                  {activeSheet === "reschedule" && "Next check-in"}
-                  {activeSheet === "completing" && "Mark as Completed"}
-                </h3>
-                <button
-                  onClick={() => { setActiveSheet(null); setCustomDate(undefined); setOutcomeNote(""); }}
-                  className="p-1.5 rounded-lg hover:bg-accent transition-colors duration-200 text-muted-foreground"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+          <DialogContent className="w-[calc(100vw-1rem)] max-w-[480px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-modal">
+            <div className="flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden">
+              <DialogHeader className="border-b border-border px-5 pb-4 pt-5 pr-14 text-left">
+                <DialogTitle className="text-[17px] font-bold text-foreground">
+                  {modalTitle}
+                </DialogTitle>
+                <DialogDescription className="text-[13px] text-muted-foreground">
+                  {modalDescription}
+                </DialogDescription>
+              </DialogHeader>
 
-              {/* Reached Out options */}
-              {activeSheet === "reached-out" && (
-                <div className="flex flex-col gap-2">
-                  <SheetOption
-                    icon={<CalendarClock size={18} className="text-primary" />}
-                    title="Schedule next follow-up"
-                    subtitle="Pick a new follow-up date"
-                    onClick={handleReachedOutSnooze}
-                  />
-                  <SheetOption
-                    icon={<CheckCircle2 size={18} className="text-success" />}
-                    title="We're good! Mark as completed"
-                    subtitle="Celebrate your win"
-                    onClick={() => setActiveSheet("completing")}
-                  />
-                  <SheetOption
-                    icon={<ArrowRight size={18} className="text-muted-foreground" />}
-                    title="Keep following up"
-                    subtitle="Set a new follow-up date"
-                    onClick={handleKeepFollowing}
-                  />
-                </div>
-              )}
-
-              {/* Completing */}
-              {activeSheet === "completing" && (
-                <div className="flex flex-col gap-4">
-                  <p className="text-[13px] text-muted-foreground">
-                    That's amazing! What was the outcome?
-                  </p>
-                  <Input
-                    placeholder="e.g. Booked speaking gig for June"
-                    value={outcomeNote}
-                    maxLength={200}
-                    onChange={(e) => setOutcomeNote(e.target.value)}
-                    className="bg-background text-[14px]"
-                  />
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Partnership deal signed", "Booked speaking gig", "Got the intro", "Deal closed"].map((ex) => (
-                      <button
-                        key={ex}
-                        onClick={() => setOutcomeNote(ex)}
-                        className="px-3 py-1.5 rounded-lg text-[12px] font-medium border border-border bg-secondary hover:bg-accent transition-colors duration-200 text-secondary-foreground"
-                      >
-                        {ex}
-                      </button>
-                    ))}
+              <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
+                {sheetError && (
+                  <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] font-medium text-destructive">
+                    {sheetError}
                   </div>
-                  <Button size="lg" className="font-semibold text-[14px]" onClick={handleMarkCompleted}>
-                    Mark as Completed
-                  </Button>
-                  <button
-                    onClick={() => setActiveSheet("reached-out")}
-                    className="text-center text-[13px] text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
-                  >
-                    Back
-                  </button>
-                </div>
-              )}
+                )}
 
-              {/* Snooze / Reschedule */}
-              {(activeSheet === "snooze" || activeSheet === "reschedule") && (
-                <div className="flex flex-col gap-2">
-                  {[
-                    { days: 1, label: "1 day", sub: "Remind me tomorrow" },
-                    { days: 3, label: "3 days", sub: "Check back in a few days" },
-                    { days: 7, label: "1 week", sub: "Come back next week" },
-                    { days: 14, label: "2 weeks", sub: "Circle back later" },
-                  ].map((opt) => (
+                {activeSheet === "reached-out" && (
+                  <div className="flex flex-col gap-3">
                     <SheetOption
-                      key={opt.days}
                       icon={<CalendarClock size={18} className="text-primary" />}
-                      title={activeSheet === "snooze" ? `Snooze ${opt.label}` : `In ${opt.label}`}
-                      subtitle={opt.sub}
-                      onClick={() => activeSheet === "snooze" ? handleSnooze(opt.days) : handleReschedule(opt.days)}
+                      title="Schedule next follow-up"
+                      subtitle="Open the date picker and reschedule"
+                      onClick={handleReachedOutSnooze}
                     />
-                  ))}
-                  <div className="pt-3 border-t border-border mt-1">
-                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Custom date</p>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className={cn("w-full justify-start text-left font-medium text-[13px]", !customDate && "text-muted-foreground")}>
-                          <CalendarIcon size={14} className="mr-2" />
-                          {customDate ? format(customDate, "EEEE, MMMM d") : "Choose a date..."}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="center">
-                        <Calendar
-                          mode="single"
-                          selected={customDate}
-                          onSelect={setCustomDate}
-                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+                    <SheetOption
+                      icon={<CheckCircle2 size={18} className="text-success" />}
+                      title="Mark as completed"
+                      subtitle="Move this lead to Completed"
+                      onClick={() => {
+                        setSheetError("");
+                        setActiveSheet("completing");
+                      }}
+                    />
+                    <SheetOption
+                      icon={<ArrowRight size={18} className="text-muted-foreground" />}
+                      title="Keep following up"
+                      subtitle="Pick a new date and keep it active"
+                      onClick={handleKeepFollowing}
+                    />
+                  </div>
+                )}
+
+                {activeSheet === "completing" && (
+                  <div className="flex flex-col gap-4">
+                    <p className="text-[13px] text-muted-foreground">
+                      Add an optional outcome so you remember what happened.
+                    </p>
+                    <Input
+                      placeholder="e.g. Booked a coffee for next Thursday"
+                      value={outcomeNote}
+                      maxLength={200}
+                      onChange={(e) => setOutcomeNote(e.target.value)}
+                      className="bg-background text-[14px]"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {["Partnership deal signed", "Booked speaking gig", "Got the intro", "Deal closed"].map((ex) => (
+                        <button
+                          key={ex}
+                          type="button"
+                          onClick={() => setOutcomeNote(ex)}
+                          className="rounded-lg border border-border bg-secondary px-3 py-2 text-[12px] font-medium text-secondary-foreground transition-colors duration-200 hover:bg-accent"
+                        >
+                          {ex}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row-reverse">
+                      <Button size="lg" className="font-semibold text-[14px] sm:flex-1" onClick={handleMarkCompleted}>
+                        Mark as completed
+                      </Button>
+                      <Button size="lg" variant="secondary" className="font-semibold text-[14px] sm:flex-1" onClick={() => {
+                        setSheetError("");
+                        setActiveSheet("reached-out");
+                      }}>
+                        Back
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {(activeSheet === "snooze" || activeSheet === "reschedule") && (
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {[
+                        { days: 1, label: "Tomorrow", sub: "Follow up the next day" },
+                        { days: 3, label: "In 3 days", sub: "Give it a short breather" },
+                        { days: 7, label: "In 1 week", sub: "Circle back next week" },
+                        { days: 14, label: "In 2 weeks", sub: "Take a longer pause" },
+                      ].map((opt) => (
+                        <SheetOption
+                          key={opt.days}
+                          icon={<CalendarClock size={18} className="text-primary" />}
+                          title={opt.label}
+                          subtitle={opt.sub}
+                          onClick={() => handleReschedule(opt.days)}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    {customDate && (
+                      ))}
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-background p-3">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Custom date</p>
+                          <p className="text-[14px] font-semibold text-foreground">
+                            {customDate ? format(customDate, "EEEE, MMMM d") : "Choose a date"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Calendar
+                        mode="single"
+                        selected={customDate}
+                        onSelect={(date) => {
+                          setSheetError("");
+                          setCustomDate(date);
+                        }}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                        className={cn("mx-auto p-3 pointer-events-auto")}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row-reverse">
                       <Button
                         size="lg"
-                        className="w-full mt-3 font-semibold text-[14px]"
-                        onClick={activeSheet === "snooze" ? handleSnoozeCustom : () => {
-                          updateLead(lead.id, { dueDate: customDate });
-                          setActiveSheet(null); setCustomDate(undefined);
-                          toast.success(`Next check-in on ${format(customDate, "MMM d")}.`);
+                        className="font-semibold text-[14px] sm:flex-1"
+                        onClick={() => applyFollowUpDate(customDate)}
+                      >
+                        Confirm {customDate ? `— ${format(customDate, "MMMM d")}` : "date"}
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        className="font-semibold text-[14px] sm:flex-1"
+                        onClick={() => {
+                          setSheetError("");
+                          setActiveSheet(activeSheet === "snooze" ? null : "reached-out");
+                          if (activeSheet === "snooze") {
+                            resetSheetState();
+                          }
                         }}
                       >
-                        Confirm — {format(customDate, "MMM d")}
+                        {activeSheet === "snooze" ? "Cancel" : "Back"}
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
         )}
-      </AnimatePresence>
+      </Dialog>
     </div>
   );
 };
@@ -481,7 +546,7 @@ const ContextRow = ({ label, value }: { label: string; value: string }) => (
 );
 
 const SheetOption = ({ icon, title, subtitle, onClick }: { icon: React.ReactNode; title: string; subtitle: string; onClick: () => void }) => (
-  <button onClick={onClick} className="flex items-center gap-3 p-3.5 bg-secondary rounded-xl hover:bg-accent transition-colors duration-200 text-left">
+  <button type="button" onClick={onClick} className="flex min-h-14 w-full touch-manipulation items-center gap-3 rounded-xl bg-secondary p-3.5 text-left transition-colors duration-200 hover:bg-accent">
     <span className="shrink-0">{icon}</span>
     <div>
       <p className="font-medium text-foreground text-[14px]">{title}</p>
