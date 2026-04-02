@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -46,6 +46,12 @@ const LeadDetail = () => {
   const [reachedOutMode, setReachedOutMode] = useState<"schedule-next" | "keep-following" | null>(null);
   const [sheetError, setSheetError] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
   if (!lead) {
     return (
@@ -498,8 +504,7 @@ const LeadDetail = () => {
                           setSheetError("");
                           setCustomDate(date);
                         }}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                        initialFocus
+                        disabled={(date) => date < todayStart}
                         className={cn("mx-auto p-3 pointer-events-auto")}
                       />
                     </div>

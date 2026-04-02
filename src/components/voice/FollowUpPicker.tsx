@@ -102,7 +102,6 @@ const FollowUpPicker = ({ value, onChange, hintLabel }: FollowUpPickerProps) => 
                 }
               }}
               disabled={(d) => d < today}
-              initialFocus
               className={cn("p-3 pointer-events-auto")}
             />
           </PopoverContent>
