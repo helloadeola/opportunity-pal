@@ -487,7 +487,7 @@ const HomePage = () => {
 
               <Button
                 className="w-full font-semibold text-[14px]"
-                onClick={() => window.open("mailto:helloadeniranadeola@gmail.com", "_blank")}
+                onClick={() => window.open("https://mail.google.com/mail/?view=cm&to=helloadeniranadeola@gmail.com", "_blank")}
               >
                 <ExternalLink size={14} className="mr-2" />
                 Send Email
