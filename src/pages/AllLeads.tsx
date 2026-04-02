@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PenLine } from "lucide-react";
+import { PenLine, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLeads } from "@/context/LeadsContext";
 import { getLeadStatus } from "@/data/sampleLeads";
 import LeadCard from "@/components/LeadCard";
 
-type Tab = "active" | "completed";
+type Tab = "active" | "completed" | "archived";
 
 const AllLeads = () => {
   const navigate = useNavigate();
@@ -31,6 +31,10 @@ const AllLeads = () => {
       return dateB - dateA;
     });
 
+  const archivedLeads = leads
+    .filter((l) => l.archived && !l.completed)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
   return (
     <div className="safe-bottom px-4 py-6 max-w-[480px] mx-auto">
       <motion.div
@@ -45,26 +49,23 @@ const AllLeads = () => {
 
       {/* Tabs */}
       <div className="flex border-b border-border mb-5">
-        <button
-          onClick={() => setTab("active")}
-          className={`flex-1 pb-2.5 text-[13px] font-semibold transition-colors duration-200 border-b-2 ${
-            tab === "active"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Active ({activeLeads.length})
-        </button>
-        <button
-          onClick={() => setTab("completed")}
-          className={`flex-1 pb-2.5 text-[13px] font-semibold transition-colors duration-200 border-b-2 ${
-            tab === "completed"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Completed ({completedLeads.length})
-        </button>
+        {([
+          { key: "active" as Tab, label: "Active", count: activeLeads.length },
+          { key: "completed" as Tab, label: "Completed", count: completedLeads.length },
+          { key: "archived" as Tab, label: "Archived", count: archivedLeads.length },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 pb-2.5 text-[13px] font-semibold transition-colors duration-200 border-b-2 ${
+              tab === t.key
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label} ({t.count})
+          </button>
+        ))}
       </div>
 
       {/* Active tab */}
@@ -104,7 +105,7 @@ const AllLeads = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
             >
-              <p className="text-foreground font-semibold text-[15px]">No wins yet.</p>
+              <p className="text-foreground font-semibold text-[15px]">No completed leads yet</p>
               <p className="text-muted-foreground text-[13px]">
                 Keep going — you'll get there.
               </p>
@@ -112,6 +113,29 @@ const AllLeads = () => {
           ) : (
             completedLeads.map((lead, i) => (
               <LeadCard key={lead.id} lead={lead} index={i} showCompleted />
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Archived tab */}
+      {tab === "archived" && (
+        <div className="flex flex-col gap-2.5">
+          {archivedLeads.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3 py-12 bg-card rounded-xl border border-border shadow-card"
+            >
+              <Archive size={24} className="text-muted-foreground" />
+              <p className="text-foreground font-semibold text-[15px]">No archived leads</p>
+              <p className="text-muted-foreground text-[13px]">
+                Archived leads will appear here.
+              </p>
+            </motion.div>
+          ) : (
+            archivedLeads.map((lead, i) => (
+              <LeadCard key={lead.id} lead={lead} index={i} showArchived />
             ))
           )}
         </div>
