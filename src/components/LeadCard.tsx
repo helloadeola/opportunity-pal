@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, CheckCircle2 } from "lucide-react";
+import { ChevronRight, CheckCircle2, Archive } from "lucide-react";
 import { format } from "date-fns";
 import { Lead } from "@/data/sampleLeads";
 import StatusBadge from "./StatusBadge";
@@ -9,9 +9,10 @@ interface LeadCardProps {
   lead: Lead;
   index?: number;
   showCompleted?: boolean;
+  showArchived?: boolean;
 }
 
-const LeadCard = ({ lead, index = 0, showCompleted = false }: LeadCardProps) => {
+const LeadCard = ({ lead, index = 0, showCompleted = false, showArchived = false }: LeadCardProps) => {
   const navigate = useNavigate();
 
   return (
@@ -42,8 +43,17 @@ const LeadCard = ({ lead, index = 0, showCompleted = false }: LeadCardProps) => 
             {lead.outcomeNote}
           </p>
         )}
+        {showArchived && (
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            Archived
+          </p>
+        )}
       </div>
-      {showCompleted ? (
+      {showArchived ? (
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap bg-secondary text-muted-foreground border border-border flex items-center gap-1">
+          <Archive size={11} /> Archived
+        </span>
+      ) : showCompleted ? (
         <span className="text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap bg-success/10 text-success border border-success/20 flex items-center gap-1">
           <CheckCircle2 size={11} /> Done
         </span>
