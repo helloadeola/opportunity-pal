@@ -237,15 +237,39 @@ const HomePage = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Clear Data */}
+              {/* Share Feedback */}
+              <button
+                onClick={() => setShowFeedback(true)}
+                className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-accent transition-colors duration-200 text-left mb-5 pb-5 border-b border-border"
+              >
+                <MessageSquare size={14} className="text-primary" />
+                <div>
+                  <p className="text-[13px] font-medium text-foreground">Share Feedback</p>
+                  <p className="text-[11px] text-muted-foreground">Help us improve. Takes 2 minutes.</p>
+                </div>
+              </button>
+
+              {/* Contact */}
+              <button
+                onClick={() => setShowContact(true)}
+                className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-accent transition-colors duration-200 text-left mb-5 pb-5 border-b border-border"
+              >
+                <Mail size={14} className="text-primary" />
+                <div>
+                  <p className="text-[13px] font-medium text-foreground">Contact</p>
+                  <p className="text-[11px] text-muted-foreground">Questions or inquiries</p>
+                </div>
+              </button>
+
+              {/* Danger Zone */}
               {!confirmClear ? (
                 <button
                   onClick={() => setConfirmClear(true)}
                   className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-destructive/8 transition-colors duration-200 text-left"
                 >
-                  <Trash2 size={14} className="text-destructive" />
+                  <AlertTriangle size={14} className="text-destructive" />
                   <div>
-                    <p className="text-[13px] font-medium text-destructive">Clear all data</p>
+                    <p className="text-[13px] font-medium text-destructive">Danger Zone</p>
                     <p className="text-[11px] text-muted-foreground">Reset to sample leads</p>
                   </div>
                 </button>
